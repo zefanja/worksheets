@@ -46,6 +46,32 @@ html_content = f"""<!DOCTYPE html>
     <style>
         body {{ padding-top: 2rem; }}
         .timestamp {{ color: var(--pico-muted-color); font-size: 0.9em; }}
+        .card-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }}
+        .card {{
+            background: var(--pico-card-background-color);
+            border: 1px solid var(--pico-muted-border-color);
+            border-radius: var(--pico-border-radius);
+            padding: 1.25rem 1.5rem;
+        }}
+        .card h2 {{
+            margin-top: 0;
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--pico-muted-border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+        }}
+        .card ul {{
+            margin: 0;
+            padding-left: 1.2rem;
+        }}
+        .card ul li {{
+            margin-bottom: 0.3rem;
+        }}
     </style>
 </head>
 <body>
@@ -53,21 +79,23 @@ html_content = f"""<!DOCTYPE html>
         <h1>Übersicht</h1>
         <p class="timestamp">Letzter Build: {timestamp}</p>
         <hr>
+        <div class="card-grid">
 """
 
 # Themen und Links alphabetisch sortiert in die HTML einfügen
 for topic, files in sorted(topics.items()):
     clean_topic = topic.replace('-', ' ').title() # Macht aus "mein-thema" -> "Mein Thema"
-    html_content += f"<h2>{clean_topic}</h2><ul>"
-    
+    html_content += f'<div class="card"><h2>{clean_topic}</h2><ul>'
+
     for file_name, file_path in sorted(files):
         # Dateinamen hübscher machen für die Anzeige
         clean_name = file_name.replace('.html', '').replace('-', ' ').title()
         html_content += f'<li><a href="{file_path}">{clean_name}</a></li>'
-    
-    html_content += "</ul>"
+
+    html_content += "</ul></div>"
 
 html_content += """
+        </div>
     </main>
 </body>
 </html>
