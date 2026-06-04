@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mathe-Grid: Winkel an geschnittenen Parallelen</title>
+<style>
+    :root { --bg-color:#F0DC82; --card-bg:#fff; --accent-color:#2c3e50; --timer-bg:#fff; --timer-alert:#e74c3c; --sol-color:#27ae60; }
+    body,html { margin:0; padding:0; height:100vh; width:100vw; background:var(--bg-color);
+        font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; overflow:hidden; display:flex; flex-direction:column; }
+    header { height:70px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
+        padding:0 15px; background:rgba(0,0,0,0.05); border-bottom:3px solid var(--accent-color); box-sizing:border-box; }
+    .header-left { display:flex; align-items:center; gap:15px; }
+    h1 { font-size:1.1rem; margin:0; color:var(--accent-color); max-width:300px; line-height:1.1; }
+    .timer-container { display:flex; align-items:center; gap:10px; }
+    #timer-display { font-family:'Courier New',monospace; font-size:2.2rem; font-weight:bold; background:var(--timer-bg);
+        color:var(--accent-color); padding:2px 15px; border-radius:8px; border:3px solid var(--accent-color); min-width:120px; text-align:center; }
+    .controls button { cursor:pointer; padding:8px 12px; border-radius:6px; border:2px solid var(--accent-color);
+        background:white; font-weight:bold; font-size:0.9rem; color:var(--accent-color); transition:all .2s;
+        display:inline-flex; align-items:center; justify-content:center; }
+    .controls button:hover { background:#eee; transform:scale(1.05); }
+    .back-btn { background:var(--accent-color)!important; color:white!important; font-size:1.2rem!important; }
+    main { flex-grow:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr);
+        gap:12px; padding:12px; box-sizing:border-box; }
+    .task-card { background:var(--card-bg); border:3px solid var(--accent-color); border-top-width:8px;
+        border-top-color:hsl(210,40%,52%); border-radius:12px; display:flex; flex-direction:column;
+        justify-content:center; align-items:center; position:relative; cursor:pointer; padding:8px;
+        box-sizing:border-box; box-shadow:4px 4px 0 rgba(0,0,0,0.1); transition:background-color .2s; }
+    .task-card:hover { background:#f9f9f9; }
+    .task-num { position:absolute; top:5px; left:8px; font-size:1.2rem; font-weight:bold; color:#2c3e50; }
+    .sketch { width:78%; max-width:300px; }
+    .question { font-size:clamp(1rem,2.6vh,1.8rem); font-weight:bold; color:var(--accent-color); margin-top:4px; }
+    .show-sol .question { opacity:0.15; }
+    .solution { font-size:clamp(1rem,2.6vh,1.8rem); color:var(--sol-color); font-weight:bold; text-align:center;
+        visibility:hidden; margin-top:2px; line-height:1.2; }
+    .solution .why { font-size:0.7em; font-weight:600; color:#5d6d7e; }
+    .show-sol .solution { visibility:visible; }
+    @media (max-width:900px){ h1{display:none;} }
+</style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <div class="controls"><button class="back-btn" onclick="history.back()" title="Zurück">←</button></div>
+        <h1>Winkel an geschnittenen Parallelen</h1>
+    </div>
+    <div class="timer-container">
+        <div class="controls"><button onclick="adjustTime(-60)">-1m</button></div>
+        <div id="timer-display">10:00</div>
+        <div class="controls">
+            <button onclick="adjustTime(60)">+1m</button>
+            <button id="startStopBtn" onclick="toggleTimer()">▶ Start</button>
+            <button onclick="resetTimer()">↻</button>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="toggleAllSolutions()">👁 Lösungen</button>
+        <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    </div>
+</header>
+<main id="task-grid">
+    <div class="task-card" onclick="this.classList.toggle('show-sol')">
+        <div class="task-num">A</div>
+        <div class="sketch"><svg viewBox="0 0 260 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><line x1="18" y1="60" x2="242" y2="60" stroke="#2c3e50" stroke-width="2.5"/><line x1="18" y1="130" x2="242" y2="130" stroke="#2c3e50" stroke-width="2.5"/><path d="M 88 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 88 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><line x1="153.2" y1="42.0" x2="102.1" y2="152.0" stroke="#2c3e50" stroke-width="2.5"/><path d="M 161.86 60.00 A 17 17 0 0 0 152.02 44.58" fill="none" stroke="#e74c3c" stroke-width="2.4"/><text x="171.8" y="46.8" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#e74c3c" text-anchor="middle">65°</text><path d="M 127.86 60.00 A 17 17 0 0 0 137.70 75.42" fill="none" stroke="#2980b9" stroke-width="2.4"/><text x="119.6" y="81.1" font-family="Segoe UI, sans-serif" font-size="17" font-weight="bold" fill="#2980b9" text-anchor="middle">x</text></svg></div>
+        <div class="question">x = ?</div>
+        <div class="solution">x = 65°<br><span class="why">Scheitelwinkel</span></div>
+    </div>
+    <div class="task-card" onclick="this.classList.toggle('show-sol')">
+        <div class="task-num">B</div>
+        <div class="sketch"><svg viewBox="0 0 260 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><line x1="18" y1="60" x2="242" y2="60" stroke="#2c3e50" stroke-width="2.5"/><line x1="18" y1="130" x2="242" y2="130" stroke="#2c3e50" stroke-width="2.5"/><path d="M 88 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 88 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><line x1="153.2" y1="42.0" x2="102.1" y2="152.0" stroke="#2c3e50" stroke-width="2.5"/><path d="M 161.86 60.00 A 17 17 0 0 0 152.02 44.58" fill="none" stroke="#e74c3c" stroke-width="2.4"/><text x="171.8" y="46.8" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#e74c3c" text-anchor="middle">65°</text><path d="M 127.86 60.00 A 17 17 0 0 1 152.02 44.58" fill="none" stroke="#2980b9" stroke-width="2.4"/><text x="128.7" y="39.7" font-family="Segoe UI, sans-serif" font-size="17" font-weight="bold" fill="#2980b9" text-anchor="middle">x</text></svg></div>
+        <div class="question">x = ?</div>
+        <div class="solution">x = 115°<br><span class="why">Nebenwinkel (180°− 65°)</span></div>
+    </div>
+    <div class="task-card" onclick="this.classList.toggle('show-sol')">
+        <div class="task-num">C</div>
+        <div class="sketch"><svg viewBox="0 0 260 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><line x1="18" y1="60" x2="242" y2="60" stroke="#2c3e50" stroke-width="2.5"/><line x1="18" y1="130" x2="242" y2="130" stroke="#2c3e50" stroke-width="2.5"/><path d="M 88 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 88 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><line x1="153.2" y1="42.0" x2="102.1" y2="152.0" stroke="#2c3e50" stroke-width="2.5"/><path d="M 127.86 60.00 A 17 17 0 0 0 137.70 75.42" fill="none" stroke="#e74c3c" stroke-width="2.4"/><text x="117.9" y="81.2" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#e74c3c" text-anchor="middle">70°</text><path d="M 95.36 130.00 A 17 17 0 0 0 105.20 145.42" fill="none" stroke="#2980b9" stroke-width="2.4"/><text x="87.1" y="151.1" font-family="Segoe UI, sans-serif" font-size="17" font-weight="bold" fill="#2980b9" text-anchor="middle">x</text></svg></div>
+        <div class="question">x = ?</div>
+        <div class="solution">x = 70°<br><span class="why">Stufenwinkel (F-Winkel)</span></div>
+    </div>
+    <div class="task-card" onclick="this.classList.toggle('show-sol')">
+        <div class="task-num">D</div>
+        <div class="sketch"><svg viewBox="0 0 260 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><line x1="18" y1="60" x2="242" y2="60" stroke="#2c3e50" stroke-width="2.5"/><line x1="18" y1="130" x2="242" y2="130" stroke="#2c3e50" stroke-width="2.5"/><path d="M 88 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 88 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><line x1="153.2" y1="42.0" x2="102.1" y2="152.0" stroke="#2c3e50" stroke-width="2.5"/><path d="M 161.86 60.00 A 17 17 0 0 1 137.70 75.42" fill="none" stroke="#e74c3c" stroke-width="2.4"/><text x="162.1" y="91.0" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#e74c3c" text-anchor="middle">110°</text><path d="M 95.36 130.00 A 17 17 0 0 1 119.52 114.58" fill="none" stroke="#2980b9" stroke-width="2.4"/><text x="96.2" y="109.7" font-family="Segoe UI, sans-serif" font-size="17" font-weight="bold" fill="#2980b9" text-anchor="middle">x</text></svg></div>
+        <div class="question">x = ?</div>
+        <div class="solution">x = 110°<br><span class="why">Wechselwinkel (Z-Winkel)</span></div>
+    </div>
+    <div class="task-card" onclick="this.classList.toggle('show-sol')">
+        <div class="task-num">E</div>
+        <div class="sketch"><svg viewBox="0 0 260 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><line x1="18" y1="60" x2="242" y2="60" stroke="#2c3e50" stroke-width="2.5"/><line x1="18" y1="130" x2="242" y2="130" stroke="#2c3e50" stroke-width="2.5"/><path d="M 88 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 88 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><line x1="153.2" y1="42.0" x2="102.1" y2="152.0" stroke="#2c3e50" stroke-width="2.5"/><path d="M 127.86 60.00 A 17 17 0 0 0 137.70 75.42" fill="none" stroke="#e74c3c" stroke-width="2.4"/><text x="117.9" y="81.2" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#e74c3c" text-anchor="middle">80°</text><path d="M 95.36 130.00 A 17 17 0 0 1 119.52 114.58" fill="none" stroke="#2980b9" stroke-width="2.4"/><text x="96.2" y="109.7" font-family="Segoe UI, sans-serif" font-size="17" font-weight="bold" fill="#2980b9" text-anchor="middle">x</text></svg></div>
+        <div class="question">x = ?</div>
+        <div class="solution">x = 100°<br><span class="why">Nachbarwinkel (180°− 80°)</span></div>
+    </div>
+    <div class="task-card" onclick="this.classList.toggle('show-sol')">
+        <div class="task-num">F</div>
+        <div class="sketch"><svg viewBox="0 0 260 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><line x1="18" y1="60" x2="242" y2="60" stroke="#2c3e50" stroke-width="2.5"/><line x1="18" y1="130" x2="242" y2="130" stroke="#2c3e50" stroke-width="2.5"/><path d="M 88 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 55 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 88 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><path d="M 100 125 l 8 5 l -8 5" fill="none" stroke="#2c3e50" stroke-width="1.6"/><line x1="153.2" y1="42.0" x2="102.1" y2="152.0" stroke="#2c3e50" stroke-width="2.5"/><path d="M 161.86 60.00 A 17 17 0 0 0 152.02 44.58" fill="none" stroke="#e74c3c" stroke-width="2.4"/><text x="171.8" y="46.8" font-family="Segoe UI, sans-serif" font-size="15" font-weight="bold" fill="#e74c3c" text-anchor="middle">55°</text><path d="M 129.36 130.00 A 17 17 0 0 1 105.20 145.42" fill="none" stroke="#2980b9" stroke-width="2.4"/><text x="128.5" y="160.3" font-family="Segoe UI, sans-serif" font-size="17" font-weight="bold" fill="#2980b9" text-anchor="middle">x</text></svg></div>
+        <div class="question">x = ?</div>
+        <div class="solution">x = 125°<br><span class="why">Stufen- + Nebenwinkel</span></div>
+    </div></main>
+<script>
+    let timeLeft = 600; let timerInterval = null;
+    function updateTimerDisplay() {
+        const min = Math.floor(timeLeft/60).toString().padStart(2,'0');
+        const sec = (timeLeft%60).toString().padStart(2,'0');
+        const d = document.getElementById('timer-display'); d.innerText = `${min}:${sec}`;
+        if (timeLeft===0){ d.style.backgroundColor='var(--timer-alert)'; d.style.color='white'; }
+        else { d.style.backgroundColor='var(--timer-bg)'; d.style.color='var(--accent-color)'; }
+    }
+    function toggleTimer() {
+        const btn=document.getElementById('startStopBtn');
+        if(timerInterval){ clearInterval(timerInterval); timerInterval=null; btn.innerText="▶ Start"; }
+        else { if(timeLeft<=0) return; btn.innerText="Ⅱ Pause";
+            timerInterval=setInterval(()=>{ timeLeft--; updateTimerDisplay();
+                if(timeLeft<=0){ clearInterval(timerInterval); timerInterval=null; btn.innerText="▶ Start"; } },1000); }
+    }
+    function resetTimer(){ if(timerInterval) toggleTimer(); timeLeft=600; updateTimerDisplay(); }
+    function adjustTime(a){ timeLeft=Math.max(0,timeLeft+a); updateTimerDisplay(); }
+    function toggleAllSolutions(){
+        const cards=document.querySelectorAll('.task-card');
+        const any=Array.from(cards).some(c=>c.classList.contains('show-sol'));
+        cards.forEach(c=>{ if(any) c.classList.remove('show-sol'); else c.classList.add('show-sol'); });
+    }
+    function toggleFullscreen(){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
+        else { if(document.exitFullscreen) document.exitFullscreen(); } }
+    window.onload=()=>updateTimerDisplay();
+</script>
+</body>
+</html>

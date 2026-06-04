@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathe-Grid: Volumen umrechnen</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']] },
+            chtml: { scale: 1.2 }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-color: #F0DC82;
+            --card-bg: #ffffff;
+            --accent-color: #2c3e50;
+            --timer-bg: #fff;
+            --timer-alert: #e74c3c;
+            --sol-color: #27ae60;
+        }
+        body, html {
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        header {
+            height: 70px; flex-shrink: 0; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px;
+            background: rgba(0,0,0,0.05); border-bottom: 3px solid var(--accent-color);
+            box-sizing: border-box;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        h1 { font-size: 1.1rem; margin: 0; color: var(--accent-color); max-width: 260px; line-height: 1.1; }
+        .timer-container { display: flex; align-items: center; gap: 10px; }
+        #timer-display {
+            font-family: 'Courier New', monospace; font-size: 2.2rem; font-weight: bold;
+            background: var(--timer-bg); color: var(--accent-color); padding: 2px 15px;
+            border-radius: 8px; border: 3px solid var(--accent-color); min-width: 120px; text-align: center;
+        }
+        .controls button {
+            cursor: pointer; padding: 8px 12px; border-radius: 6px; border: 2px solid var(--accent-color);
+            background: white; font-weight: bold; font-size: 0.9rem; color: var(--accent-color);
+            transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .controls button:hover { background: #eee; transform: scale(1.05); }
+        .back-btn { background: var(--accent-color) !important; color: white !important; font-size: 1.2rem !important; }
+        main {
+            flex-grow: 1; display: grid; grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(6, 1fr); gap: 10px; padding: 10px; box-sizing: border-box;
+        }
+        .task-card {
+            background: var(--card-bg); border: 3px solid var(--accent-color); border-top-width: 8px;
+            border-radius: 12px; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; position: relative; cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s; box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+        }
+        .task-card:hover { background-color: #f9f9f9; }
+        .task-num { position: absolute; top: 5px; left: 8px; font-size: 1.2rem; font-weight: bold; color: #2c3e50; }
+        .question { font-size: clamp(0.95rem, 2.6vh, 2rem); color: var(--accent-color); margin-bottom: 5px; text-align: center; line-height: 1.25; }
+        .show-sol .question { opacity: 0.2; }
+        .solution {
+            font-size: clamp(0.95rem, 2.6vh, 2rem); color: var(--sol-color); font-weight: bold; border-top: 2px dashed #ddd;
+            width: 80%; text-align: center; padding-top: 5px; visibility: hidden; line-height: 1.25;
+        }
+        .show-sol .solution { visibility: visible; }
+        @media (max-width: 900px) { h1 { display: none; } }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <div class="controls"><button class="back-btn" onclick="history.back()" title="Zurück">←</button></div>
+        <h1>Volumen umrechnen</h1>
+    </div>
+    <div class="timer-container">
+        <div class="controls"><button onclick="adjustTime(-60)">-1m</button></div>
+        <div id="timer-display">10:00</div>
+        <div class="controls">
+            <button onclick="adjustTime(60)">+1m</button>
+            <button id="startStopBtn" onclick="toggleTimer()">▶ Start</button>
+            <button onclick="resetTimer()">↻</button>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="toggleAllSolutions()">👁 Lösungen</button>
+        <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    </div>
+</header>
+<main id="task-grid"></main>
+<script>
+    const levels = [
+  {
+    "hint": "Faktor 1000",
+    "tasks": [
+      {
+        "q": "\\(1\\,\\text{dm}^3 = ?\\,\\text{cm}^3\\)",
+        "a": "\\(1000\\,\\text{cm}^3\\)"
+      },
+      {
+        "q": "\\(1\\,\\text{m}^3 = ?\\,\\text{dm}^3\\)",
+        "a": "\\(1000\\,\\text{dm}^3\\)"
+      },
+      {
+        "q": "\\(1\\,\\text{l} = ?\\,\\text{ml}\\)",
+        "a": "\\(1000\\,\\text{ml}\\)"
+      }
+    ]
+  },
+  {
+    "hint": "Liter",
+    "tasks": [
+      {
+        "q": "\\(1\\,\\text{m}^3 = ?\\,\\text{l}\\)",
+        "a": "\\(1000\\,\\text{l}\\)"
+      },
+      {
+        "q": "\\(1\\,\\text{dm}^3 = ?\\,\\text{l}\\)",
+        "a": "\\(1\\,\\text{l}\\)"
+      },
+      {
+        "q": "\\(5\\,\\text{l} = ?\\,\\text{ml}\\)",
+        "a": "\\(5000\\,\\text{ml}\\)"
+      }
+    ]
+  },
+  {
+    "hint": "",
+    "tasks": [
+      {
+        "q": "\\(1\\,\\text{m}^3 = ?\\,\\text{cm}^3\\)",
+        "a": "\\(1000000\\,\\text{cm}^3\\)"
+      },
+      {
+        "q": "\\(2,5\\,\\text{l} = ?\\,\\text{ml}\\)",
+        "a": "\\(2500\\,\\text{ml}\\)"
+      },
+      {
+        "q": "\\(3\\,\\text{dm}^3 = ?\\,\\text{cm}^3\\)",
+        "a": "\\(3000\\,\\text{cm}^3\\)"
+      }
+    ]
+  },
+  {
+    "hint": "",
+    "tasks": [
+      {
+        "q": "\\(4000\\,\\text{cm}^3 = ?\\,\\text{dm}^3\\)",
+        "a": "\\(4\\,\\text{dm}^3\\)"
+      },
+      {
+        "q": "\\(0,5\\,\\text{m}^3 = ?\\,\\text{l}\\)",
+        "a": "\\(500\\,\\text{l}\\)"
+      },
+      {
+        "q": "\\(250\\,\\text{ml} = ?\\,\\text{l}\\)",
+        "a": "\\(0,25\\,\\text{l}\\)"
+      }
+    ]
+  },
+  {
+    "hint": "",
+    "tasks": [
+      {
+        "q": "\\(2\\,\\text{m}^3 = ?\\,\\text{l}\\)",
+        "a": "\\(2000\\,\\text{l}\\)"
+      },
+      {
+        "q": "\\(7500\\,\\text{ml} = ?\\,\\text{l}\\)",
+        "a": "\\(7,5\\,\\text{l}\\)"
+      },
+      {
+        "q": "\\(0,75\\,\\text{l} = ?\\,\\text{cm}^3\\)",
+        "a": "\\(750\\,\\text{cm}^3\\)"
+      }
+    ]
+  },
+  {
+    "hint": "anspruchsvoll",
+    "tasks": [
+      {
+        "q": "\\(1\\,\\text{m}^3 = ?\\,\\text{ml}\\)",
+        "a": "\\(1000000\\,\\text{ml}\\)"
+      },
+      {
+        "q": "\\(12000\\,\\text{cm}^3 = ?\\,\\text{l}\\)",
+        "a": "\\(12\\,\\text{l}\\)"
+      },
+      {
+        "q": "\\(0,004\\,\\text{m}^3 = ?\\,\\text{l}\\)",
+        "a": "\\(4\\,\\text{l}\\)"
+      }
+    ]
+  }
+];
+    let timeLeft = 600;
+    let timerInterval = null;
+
+    function initGrid() {
+        const grid = document.getElementById('task-grid');
+        grid.innerHTML = '';
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let taskIndex = 0;
+        levels.forEach((level, levelIdx) => {
+            const lightness = 60 - levelIdx * 6;
+            const topColor = `hsl(210, 40%, ${lightness}%)`;
+            level.tasks.forEach((task) => {
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.style.borderTopColor = topColor;
+                const letter = alphabet[taskIndex] || (taskIndex + 1);
+                card.innerHTML = `<div class="task-num">${letter}</div>
+                    <div class="question">${task.q}</div>
+                    <div class="solution">${task.a}</div>`;
+                card.onclick = () => card.classList.toggle('show-sol');
+                grid.appendChild(card);
+                taskIndex++;
+            });
+        });
+        renderMath();
+    }
+    function renderMath() {
+        if (window.MathJax && window.MathJax.typesetPromise) { window.MathJax.typesetPromise(); }
+        else { setTimeout(renderMath, 80); }
+    }
+    function updateTimerDisplay() {
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        const display = document.getElementById('timer-display');
+        display.innerText = `${min}:${sec}`;
+        if (timeLeft === 0) { display.style.backgroundColor = 'var(--timer-alert)'; display.style.color = 'white'; }
+        else { display.style.backgroundColor = 'var(--timer-bg)'; display.style.color = 'var(--accent-color)'; }
+    }
+    function toggleTimer() {
+        const btn = document.getElementById('startStopBtn');
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; btn.innerText = "▶ Start"; }
+        else {
+            if (timeLeft <= 0) return;
+            btn.innerText = "Ⅱ Pause";
+            timerInterval = setInterval(() => {
+                timeLeft--; updateTimerDisplay();
+                if (timeLeft <= 0) { clearInterval(timerInterval); timerInterval = null; btn.innerText = "▶ Start"; }
+            }, 1000);
+        }
+    }
+    function resetTimer() { if (timerInterval) toggleTimer(); timeLeft = 600; updateTimerDisplay(); }
+    function adjustTime(amount) { timeLeft = Math.max(0, timeLeft + amount); updateTimerDisplay(); }
+    function toggleAllSolutions() {
+        const cards = document.querySelectorAll('.task-card');
+        const anyVisible = Array.from(cards).some(c => c.classList.contains('show-sol'));
+        cards.forEach(c => { if (anyVisible) c.classList.remove('show-sol'); else c.classList.add('show-sol'); });
+    }
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+        else { if (document.exitFullscreen) document.exitFullscreen(); }
+    }
+    window.onload = () => { initGrid(); updateTimerDisplay(); };
+</script>
+</body>
+</html>
