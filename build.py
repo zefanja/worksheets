@@ -48,7 +48,7 @@ html_content = f"""<!DOCTYPE html>
         .timestamp {{ color: var(--pico-muted-color); font-size: 0.9em; }}
         .card-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 1.5rem;
             margin-top: 1.5rem;
         }}
@@ -71,6 +71,9 @@ html_content = f"""<!DOCTYPE html>
         }}
         .card ul li {{
             margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }}
     </style>
 </head>
@@ -89,8 +92,8 @@ for topic, files in sorted(topics.items()):
 
     for file_name, file_path in sorted(files):
         # Dateinamen hübscher machen für die Anzeige
-        clean_name = file_name.replace('.html', '').replace('-', ' ').title()
-        html_content += f'<li><a href="{file_path}">{clean_name}</a></li>'
+        clean_name = file_name.replace('.html', '').replace('-', ' ').replace('_', ' ').title()
+        html_content += f'<li><a href="{file_path}" title="{clean_name}">{clean_name}</a></li>'
 
     html_content += "</ul></div>"
 
