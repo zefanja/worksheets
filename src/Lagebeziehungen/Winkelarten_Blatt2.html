@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winkelarten erkennen – Blatt 2 (gemischt)</title>
+<style>
+:root{--bg-color:#F0DC82;--card-bg:#fff;--accent-color:#2c3e50;
+--timer-bg:#fff;--timer-alert:#e74c3c;--sol-color:#27ae60;--ang-a:#2471a3;--ang-b:#ca6f1e;}
+body,html{margin:0;padding:0;height:100vh;width:100vw;background-color:var(--bg-color);
+font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;display:flex;flex-direction:column;}
+header{height:70px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+padding:0 15px;background:rgba(0,0,0,0.05);border-bottom:3px solid var(--accent-color);box-sizing:border-box;}
+.header-left{display:flex;align-items:center;gap:15px;}
+h1{font-size:1.0rem;margin:0;color:var(--accent-color);max-width:300px;line-height:1.1;}
+.legend{display:flex;gap:10px;align-items:center;font-size:0.74rem;color:var(--accent-color);flex-wrap:wrap;max-width:430px;}
+.legend span{display:inline-flex;align-items:center;gap:4px;font-weight:bold;}
+.dot{width:13px;height:13px;border-radius:3px;display:inline-block;}
+.timer-container{display:flex;align-items:center;gap:8px;}
+#timer-display{font-family:'Courier New',monospace;font-size:2.1rem;font-weight:bold;background:var(--timer-bg);
+color:var(--accent-color);padding:2px 14px;border-radius:8px;border:3px solid var(--accent-color);min-width:118px;text-align:center;}
+.controls button{cursor:pointer;padding:8px 11px;border-radius:6px;border:2px solid var(--accent-color);
+background:white;font-weight:bold;font-size:0.88rem;color:var(--accent-color);transition:all .2s;
+display:inline-flex;align-items:center;justify-content:center;}
+.controls button:hover{background:#eee;transform:scale(1.05);}
+.back-btn{background:var(--accent-color)!important;color:white!important;font-size:1.2rem!important;}
+main{flex-grow:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+gap:10px;padding:10px;box-sizing:border-box;}
+.task-card{background:var(--card-bg);border:3px solid var(--accent-color);border-top-width:8px;border-radius:12px;
+display:flex;flex-direction:column;justify-content:space-between;align-items:center;position:relative;
+cursor:pointer;padding:6px 6px 4px;box-sizing:border-box;transition:background-color .2s;
+box-shadow:4px 4px 0 rgba(0,0,0,0.1);overflow:hidden;}
+.task-card:hover{background-color:#f9f9f9;}
+.task-num{position:absolute;top:4px;left:8px;font-size:1.1rem;font-weight:bold;color:var(--accent-color);}
+.sketch{flex:1 1 auto;display:flex;align-items:center;justify-content:center;width:100%;min-height:0;margin-top:14px;}
+.sketch svg{max-width:100%;max-height:100%;width:auto;height:auto;overflow:visible;}
+.fo-lbl{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;font-weight:bold;
+line-height:1;color:var(--accent-color);white-space:nowrap;font-style:italic;}
+.fo-ang-a{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;font-weight:bold;color:var(--ang-a);}
+.fo-ang-b{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;font-weight:bold;color:var(--ang-b);}
+.question{font-size:clamp(.72rem,1.6vh,1rem);color:var(--accent-color);font-weight:600;text-align:center;line-height:1.15;margin:2px 0;}
+.show-sol .question{opacity:.22;}
+.solution{font-size:clamp(.74rem,1.7vh,1rem);color:var(--sol-color);font-weight:bold;border-top:2px dashed #ddd;
+width:94%;text-align:center;padding-top:3px;visibility:hidden;line-height:1.15;}
+.show-sol .solution{visibility:visible;}
+@media(max-width:1100px){h1,.legend{display:none;}}
+</style>
+</head>
+<body>
+<header>
+ <div class="header-left">
+  <div class="controls"><button class="back-btn" onclick="history.back()" title="Zurück">&#8592;</button></div>
+  <h1>Winkelarten erkennen – Blatt 2 (gemischt)</h1>
+  <div class="legend">
+   <span><i class="dot" style="background:var(--ang-a)"></i>&#945;</span>
+   <span><i class="dot" style="background:var(--ang-b)"></i>&#946;</span>
+   <span>&middot; Nebenw. &middot; Scheitelw. &middot; Stufenw. &middot; Wechselw. &middot; keiner</span>
+  </div>
+ </div>
+ <div class="timer-container">
+  <div class="controls"><button onclick="adjustTime(-60)">-1m</button></div>
+  <div id="timer-display">06:00</div>
+  <div class="controls">
+   <button onclick="adjustTime(60)">+1m</button>
+   <button id="startStopBtn" onclick="toggleTimer()">&#9654; Start</button>
+   <button onclick="resetTimer()">&#8635;</button>
+  </div>
+ </div>
+ <div class="controls">
+  <button onclick="toggleAllSolutions()">&#128065; Lösungen</button>
+  <button onclick="toggleFullscreen()">&#9974; Fullscreen</button>
+ </div>
+</header>
+<main id="task-grid"></main>
+<script>
+const TASKS=[{"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-85\" y1=\"140\" x2=\"325\" y2=\"140\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"132.29\" y1=\"6.5\" x2=\"51.44\" y2=\"179.88\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"70.03\" cy=\"140\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"120\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"112.75\" y=\"3.94\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 133 50 A 21 21 0 0 1 103.13 69.03 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"117.66\" y=\"67.15\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 70.03 140 L 91.03 140 A 21 21 0 0 1 61.16 159.03 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"75.69\" y=\"157.15\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Stufenwinkel", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-78.01\" y1=\"193.06\" x2=\"318.01\" y2=\"86.94\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"91.71\" y1=\"6.5\" x2=\"168.79\" y2=\"171.79\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"150.19\" cy=\"131.91\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"120\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"77.25\" y=\"3.94\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 133 50 A 21 21 0 0 1 120.87 69.03 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"127.15\" y=\"57.66\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 150.19 131.91 L 129.91 137.34 A 21 21 0 0 1 141.32 112.88 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"111.1\" y=\"109.81\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Keiner – die Geraden sind nicht parallel (Wechselwinkel-Lage)", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-85\" y1=\"140\" x2=\"325\" y2=\"140\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"132.29\" y1=\"6.5\" x2=\"51.44\" y2=\"179.88\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"70.03\" cy=\"140\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"120\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"112.75\" y=\"3.94\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 133 50 A 21 21 0 0 1 103.13 69.03 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"117.66\" y=\"67.15\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 70.03 140 L 49.03 140 A 21 21 0 0 1 78.91 120.97 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"42.38\" y=\"104.85\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Wechselwinkel (innen)", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"36.86\" y1=\"46\" x2=\"203.14\" y2=\"142\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"128.37\" y1=\"-1.63\" x2=\"111.63\" y2=\"189.63\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"120\" cy=\"94\" r=\"2.0\" fill=\"var(--accent-color)\"/><path d=\"M 120 94 L 141.65 106.5 A 25 25 0 0 1 117.82 118.9 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"125.16\" y=\"116.05\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 120 94 L 98.35 81.5 A 25 25 0 0 1 122.18 69.1 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"92.84\" y=\"53.95\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Scheitelwinkel", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"24\" y1=\"94\" x2=\"216\" y2=\"94\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"175.06\" y1=\"15.36\" x2=\"64.94\" y2=\"172.64\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"120\" cy=\"94\" r=\"2.0\" fill=\"var(--accent-color)\"/><path d=\"M 120 94 L 145 94 A 25 25 0 0 1 105.66 114.48 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"125.16\" y=\"116.05\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 120 94 L 105.66 114.48 A 25 25 0 0 1 95 94 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"77.95\" y=\"101.16\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Nebenwinkel", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-85\" y1=\"140\" x2=\"325\" y2=\"140\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"97.17\" y1=\"4.35\" x2=\"154.84\" y2=\"181.85\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"141.24\" cy=\"140\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"120\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"82.02\" y=\"2.06\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 91 50 A 21 21 0 0 1 105.51 30.03 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"75.92\" y=\"22.78\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 141.24 140 L 120.24 140 A 21 21 0 0 1 134.75 120.03 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"105.16\" y=\"112.78\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Stufenwinkel", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-85\" y1=\"140\" x2=\"325\" y2=\"140\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"88\" y1=\"8.43\" x2=\"185.96\" y2=\"178.11\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"163.96\" cy=\"140\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"120\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"74\" y=\"5.63\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 91 50 A 21 21 0 0 1 101.5 31.81 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"74.15\" y=\"25.5\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 163.96 140 L 184.96 140 A 21 21 0 0 1 174.46 158.19 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"179.81\" y=\"146.5\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Wechselwinkel (außen)", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-78.91\" y1=\"90.41\" x2=\"318.91\" y2=\"189.59\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"88\" y1=\"8.43\" x2=\"193.35\" y2=\"190.91\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"171.35\" cy=\"152.8\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"148\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"74\" y=\"5.63\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 101.5 31.81 A 21 21 0 0 1 133 50 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"116.5\" y=\"14.15\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 171.35 152.8 L 160.85 134.62 A 21 21 0 0 1 191.73 157.88 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"179.01\" y=\"119.05\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Keiner – die Geraden sind nicht parallel (Stufenwinkel-Lage)", "prompt": "Welche Beziehung haben &#945; und &#946;?"}, {"svg": "<svg viewBox=\"0 0 240 185\" width=\"240\" height=\"185\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"22\" y1=\"50\" x2=\"214\" y2=\"50\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"-79.75\" y1=\"186.11\" x2=\"319.75\" y2=\"93.89\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"94.02\" y1=\"5.5\" x2=\"162.43\" y2=\"174.81\" stroke=\"var(--accent-color)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"112\" cy=\"50\" r=\"2.0\" fill=\"var(--accent-color)\"/><circle cx=\"145.94\" cy=\"134.01\" r=\"2.0\" fill=\"var(--accent-color)\"/><foreignObject x=\"19\" y=\"31\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">g</div></foreignObject><foreignObject x=\"19\" y=\"120\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">h</div></foreignObject><foreignObject x=\"79.27\" y=\"3.06\" width=\"18\" height=\"16\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-lbl\">t</div></foreignObject><path d=\"M 112 50 L 104.13 30.53 A 21 21 0 0 1 133 50 Z\" fill=\"rgba(41,128,185,0.30)\" stroke=\"#2471a3\" stroke-width=\"1.5\"/><foreignObject x=\"118.33\" y=\"15.3\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-a\">&#945;</div></foreignObject><path d=\"M 145.94 134.01 L 153.81 153.48 A 21 21 0 0 1 125.48 138.73 Z\" fill=\"rgba(230,126,34,0.32)\" stroke=\"#ca6f1e\" stroke-width=\"1.5\"/><foreignObject x=\"120.63\" y=\"152.51\" width=\"22\" height=\"18\" overflow=\"visible\"><div xmlns=\"http://www.w3.org/1999/xhtml\" class=\"fo-ang-b\">&#946;</div></foreignObject></svg>", "sol": "Keiner – die Geraden sind nicht parallel (Wechselwinkel-Lage)", "prompt": "Welche Beziehung haben &#945; und &#946;?"}];
+let timeLeft=360,timerInterval=null;
+function initGrid(){
+ const grid=document.getElementById('task-grid');grid.innerHTML='';
+ const A="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+ TASKS.forEach((t,i)=>{
+  const card=document.createElement('div');card.className='task-card';
+  card.innerHTML=`<div class="task-num">${A[i]||(i+1)}</div>`+
+   `<div class="sketch">${t.svg}</div>`+
+   `<div class="question">${t.prompt}</div>`+
+   `<div class="solution">${t.sol}</div>`;
+  card.onclick=()=>card.classList.toggle('show-sol');
+  grid.appendChild(card);
+ });
+}
+function updateTimerDisplay(){
+ const m=Math.floor(timeLeft/60).toString().padStart(2,'0');
+ const s=(timeLeft%60).toString().padStart(2,'0');
+ const d=document.getElementById('timer-display');d.innerText=`${m}:${s}`;
+ if(timeLeft===0){d.style.backgroundColor='var(--timer-alert)';d.style.color='white';}
+ else{d.style.backgroundColor='var(--timer-bg)';d.style.color='var(--accent-color)';}
+}
+function toggleTimer(){
+ const b=document.getElementById('startStopBtn');
+ if(timerInterval){clearInterval(timerInterval);timerInterval=null;b.innerText="\u25b6 Start";}
+ else{if(timeLeft<=0)return;b.innerText="\u23f8 Pause";
+  timerInterval=setInterval(()=>{timeLeft--;updateTimerDisplay();
+   if(timeLeft<=0){clearInterval(timerInterval);timerInterval=null;b.innerText="\u25b6 Start";}},1000);}
+}
+function resetTimer(){if(timerInterval)toggleTimer();timeLeft=360;updateTimerDisplay();}
+function adjustTime(a){timeLeft=Math.max(0,timeLeft+a);updateTimerDisplay();}
+function toggleAllSolutions(){
+ const c=document.querySelectorAll('.task-card');
+ const any=Array.from(c).some(x=>x.classList.contains('show-sol'));
+ c.forEach(x=>{if(any)x.classList.remove('show-sol');else x.classList.add('show-sol');});
+}
+function toggleFullscreen(){
+ if(!document.fullscreenElement){document.documentElement.requestFullscreen();}
+ else{if(document.exitFullscreen)document.exitFullscreen();}
+}
+window.onload=()=>{initGrid();updateTimerDisplay();};
+</script>
+</body>
+</html>
