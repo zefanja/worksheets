@@ -139,7 +139,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: var(--accent-color);
-        }
+        z-index: 11; }
 
         .question {
             font-size: clamp(1.2rem, 3.5vh, 3rem);
@@ -152,14 +152,12 @@
         }
 
         .solution {
-            font-size: clamp(1.2rem, 3.5vh, 3rem);
-            color: var(--sol-color);
-            font-weight: bold;
-            border-top: 2px dashed #ddd;
-            width: 70%;
-            text-align: center;
-            padding-top: 5px;
-            visibility: hidden;
+            position: absolute; inset: 0; border-radius: 9px;
+            background: rgba(255,255,255,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: clamp(1.1rem,3.5vh,2.2rem); color: var(--sol-color); font-weight: bold;
+            text-align: center; padding: 12px; box-sizing: border-box;
+            visibility: hidden; z-index: 10; line-height: 1.4;
         }
 
         .show-sol .solution {

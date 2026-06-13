@@ -107,7 +107,7 @@
         .task-num {
             position: absolute; top: 11px; left: 10px;
             font-size: 1.1rem; font-weight: bold; color: var(--accent-color);
-        }
+        z-index: 11; }
 
         /* badge */
         .type-badge {
@@ -153,12 +153,12 @@
 
         /* ── Solution ─────────────────────────────────────────────────────── */
         .solution {
-            visibility: hidden;
-            display: flex; flex-direction: column; align-items: center;
-            border-top: 2px dashed #ddd;
-            width: calc(100% - 24px);
-            margin-top: 8px; padding-top: 5px;
-            gap: 1px;
+            position: absolute; inset: 0; border-radius: 9px;
+            background: rgba(255,255,255,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: clamp(1.1rem,3.5vh,2.2rem); color: var(--sol-color); font-weight: bold;
+            text-align: center; padding: 12px; box-sizing: border-box;
+            visibility: hidden; z-index: 10; line-height: 1.4;
         }
         .sol-calc {
             font-size: clamp(0.7rem, 1.55vh, 0.95rem);

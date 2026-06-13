@@ -112,7 +112,7 @@
         .task-num {
             position: absolute; top: 9px; left: 10px;
             font-size: 1.05rem; font-weight: bold; color: var(--accent-color);
-        }
+        z-index: 11; }
 
         /* strategy badge */
         .strat-badge {
@@ -138,14 +138,12 @@
 
         /* answer: show the symbol large + bold */
         .sol-symbol {
-            font-size: clamp(1.4rem, 4.5vh, 3.2rem);
-            font-weight: 900;
-            color: var(--sol-color);
-            line-height: 1;
-            visibility: hidden;
-            border-top: 2px dashed #ddd;
-            width: 60%; text-align: center;
-            padding-top: 4px;
+            position: absolute; inset: 0; border-radius: 9px;
+            background: rgba(255,255,255,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: clamp(1.4rem, 4.5vh, 3.2rem); font-weight: 900; color: var(--sol-color);
+            text-align: center; padding: 12px; box-sizing: border-box;
+            visibility: hidden; z-index: 10; line-height: 1.4;
         }
         .show-sol .sol-symbol { visibility: visible; }
 
