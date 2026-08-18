@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathe-Grid: Bruch – Dezimal – Prozent (alle 3 Darstellungen)</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']] },
+            chtml: { scale: 1.2 }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-color: #F0DC82;
+            --card-bg: #ffffff;
+            --accent-color: #2c3e50;
+            --timer-bg: #fff;
+            --timer-alert: #e74c3c;
+            --sol-color: #27ae60;
+        }
+        body, html {
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        header {
+            height: 70px; flex-shrink: 0; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px;
+            background: rgba(0,0,0,0.05); border-bottom: 3px solid var(--accent-color);
+            box-sizing: border-box;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        h1 { font-size: 1.1rem; margin: 0; color: var(--accent-color); max-width: 260px; line-height: 1.1; }
+        .timer-container { display: flex; align-items: center; gap: 10px; }
+        #timer-display {
+            font-family: 'Courier New', monospace; font-size: 2.2rem; font-weight: bold;
+            background: var(--timer-bg); color: var(--accent-color); padding: 2px 15px;
+            border-radius: 8px; border: 3px solid var(--accent-color); min-width: 120px; text-align: center;
+        }
+        .controls button {
+            cursor: pointer; padding: 8px 12px; border-radius: 6px; border: 2px solid var(--accent-color);
+            background: white; font-weight: bold; font-size: 0.9rem; color: var(--accent-color);
+            transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .controls button:hover { background: #eee; transform: scale(1.05); }
+        .back-btn { background: var(--accent-color) !important; color: white !important; font-size: 1.2rem !important; }
+        main {
+            flex-grow: 1; display: grid; grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(6, 1fr); gap: 10px; padding: 10px; box-sizing: border-box;
+        }
+        .task-card {
+            background: var(--card-bg); border: 3px solid var(--accent-color); border-top-width: 8px;
+            border-radius: 12px; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; position: relative; cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s; box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+        }
+        .task-card:hover { background-color: #f9f9f9; }
+        .task-num { position: absolute; top: 5px; left: 8px; font-size: 1.2rem; font-weight: bold; color: #2c3e50; z-index: 11; }
+        .question { font-size: clamp(0.95rem, 2.6vh, 2rem); color: var(--accent-color); margin-bottom: 5px; text-align: center; line-height: 1.25; }
+        .show-sol .question { opacity: 0.2; }
+        .solution {
+            position: absolute; inset: 0; border-radius: 9px;
+            background: rgba(255,255,255,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: clamp(1.1rem,3.5vh,2.2rem); color: var(--sol-color); font-weight: bold;
+            text-align: center; padding: 12px; box-sizing: border-box;
+            visibility: hidden; z-index: 10; line-height: 1.4;
+        }
+        .show-sol .solution { visibility: visible; }
+        @media (max-width: 900px) { h1 { display: none; } }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <div class="controls"><button class="back-btn" onclick="history.back()" title="Zurück">←</button></div>
+        <h1>Bruch ↔ Dezimal ↔ Prozent (alle 3 Formen)</h1>
+    </div>
+    <div class="timer-container">
+        <div class="controls"><button onclick="adjustTime(-60)">-1m</button></div>
+        <div id="timer-display">10:00</div>
+        <div class="controls">
+            <button onclick="adjustTime(60)">+1m</button>
+            <button id="startStopBtn" onclick="toggleTimer()">▶ Start</button>
+            <button onclick="resetTimer()">↻</button>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="toggleAllSolutions()">👁 Lösungen</button>
+        <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    </div>
+</header>
+<main id="task-grid"></main>
+<script>
+    const levels = [
+  {
+    "hint": "Leicht: Hälften und Viertel",
+    "tasks": [
+      {
+        "q": "\\(\\frac{1}{2}\\)",
+        "a": "\\(\\frac{1}{2} = 0{,}5 = 50\\,\\%\\)"
+      },
+      {
+        "q": "\\(75\\,\\%\\)",
+        "a": "\\(\\frac{3}{4} = 0{,}75 = 75\\,\\%\\)"
+      },
+      {
+        "q": "\\(0{,}25\\)",
+        "a": "\\(\\frac{1}{4} = 0{,}25 = 25\\,\\%\\)"
+      }
+    ]
+  },
+  {
+    "hint": "Leicht: Fünftel und Zehntel",
+    "tasks": [
+      {
+        "q": "\\(\\frac{3}{10}\\)",
+        "a": "\\(\\frac{3}{10} = 0{,}3 = 30\\,\\%\\)"
+      },
+      {
+        "q": "\\(80\\,\\%\\)",
+        "a": "\\(\\frac{4}{5} = 0{,}8 = 80\\,\\%\\)"
+      },
+      {
+        "q": "\\(0{,}2\\)",
+        "a": "\\(\\frac{1}{5} = 0{,}2 = 20\\,\\%\\)"
+      }
+    ]
+  },
+  {
+    "hint": "Mittel: Hundertstel",
+    "tasks": [
+      {
+        "q": "\\(\\frac{17}{100}\\)",
+        "a": "\\(\\frac{17}{100} = 0{,}17 = 17\\,\\%\\)"
+      },
+      {
+        "q": "\\(0{,}63\\)",
+        "a": "\\(\\frac{63}{100} = 0{,}63 = 63\\,\\%\\)"
+      },
+      {
+        "q": "\\(8\\,\\%\\)",
+        "a": "\\(\\frac{2}{25} = 0{,}08 = 8\\,\\%\\)"
+      }
+    ]
+  },
+  {
+    "hint": "Mittel: Zwanzigstel und Fünfundzwanzigstel (kürzen)",
+    "tasks": [
+      {
+        "q": "\\(\\frac{3}{20}\\)",
+        "a": "\\(\\frac{3}{20} = 0{,}15 = 15\\,\\%\\)"
+      },
+      {
+        "q": "\\(0{,}04\\)",
+        "a": "\\(\\frac{1}{25} = 0{,}04 = 4\\,\\%\\)"
+      },
+      {
+        "q": "\\(45\\,\\%\\)",
+        "a": "\\(\\frac{9}{20} = 0{,}45 = 45\\,\\%\\)"
+      }
+    ]
+  },
+  {
+    "hint": "Schwer: Achtel",
+    "tasks": [
+      {
+        "q": "\\(\\frac{1}{8}\\)",
+        "a": "\\(\\frac{1}{8} = 0{,}125 = 12{,}5\\,\\%\\)"
+      },
+      {
+        "q": "\\(62{,}5\\,\\%\\)",
+        "a": "\\(\\frac{5}{8} = 0{,}625 = 62{,}5\\,\\%\\)"
+      },
+      {
+        "q": "\\(0{,}375\\)",
+        "a": "\\(\\frac{3}{8} = 0{,}375 = 37{,}5\\,\\%\\)"
+      }
+    ]
+  },
+  {
+    "hint": "Schwer: Vierzigstel (kürzen)",
+    "tasks": [
+      {
+        "q": "\\(\\frac{7}{40}\\)",
+        "a": "\\(\\frac{7}{40} = 0{,}175 = 17{,}5\\,\\%\\)"
+      },
+      {
+        "q": "\\(0{,}225\\)",
+        "a": "\\(\\frac{9}{40} = 0{,}225 = 22{,}5\\,\\%\\)"
+      },
+      {
+        "q": "\\(27{,}5\\,\\%\\)",
+        "a": "\\(\\frac{11}{40} = 0{,}275 = 27{,}5\\,\\%\\)"
+      }
+    ]
+  }
+];
+    let timeLeft = 600;
+    let timerInterval = null;
+
+    function initGrid() {
+        const grid = document.getElementById('task-grid');
+        grid.innerHTML = '';
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let taskIndex = 0;
+        levels.forEach((level, levelIdx) => {
+            const lightness = 60 - levelIdx * 6;
+            const topColor = `hsl(210, 40%, ${lightness}%)`;
+            level.tasks.forEach((task) => {
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.style.borderTopColor = topColor;
+                const letter = alphabet[taskIndex] || (taskIndex + 1);
+                card.innerHTML = `<div class="task-num">${letter}</div>
+                    <div class="question">${task.q}</div>
+                    <div class="solution">${task.a}</div>`;
+                card.onclick = () => card.classList.toggle('show-sol');
+                grid.appendChild(card);
+                taskIndex++;
+            });
+        });
+        renderMath();
+    }
+    function renderMath() {
+        if (window.MathJax && window.MathJax.typesetPromise) { window.MathJax.typesetPromise(); }
+        else { setTimeout(renderMath, 80); }
+    }
+    function updateTimerDisplay() {
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        const display = document.getElementById('timer-display');
+        display.innerText = `${min}:${sec}`;
+        if (timeLeft === 0) { display.style.backgroundColor = 'var(--timer-alert)'; display.style.color = 'white'; }
+        else { display.style.backgroundColor = 'var(--timer-bg)'; display.style.color = 'var(--accent-color)'; }
+    }
+    function toggleTimer() {
+        const btn = document.getElementById('startStopBtn');
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; btn.innerText = "▶ Start"; }
+        else {
+            if (timeLeft <= 0) return;
+            btn.innerText = "Ⅱ Pause";
+            timerInterval = setInterval(() => {
+                timeLeft--; updateTimerDisplay();
+                if (timeLeft <= 0) { clearInterval(timerInterval); timerInterval = null; btn.innerText = "▶ Start"; }
+            }, 1000);
+        }
+    }
+    function resetTimer() { if (timerInterval) toggleTimer(); timeLeft = 600; updateTimerDisplay(); }
+    function adjustTime(amount) { timeLeft = Math.max(0, timeLeft + amount); updateTimerDisplay(); }
+    function toggleAllSolutions() {
+        const cards = document.querySelectorAll('.task-card');
+        const anyVisible = Array.from(cards).some(c => c.classList.contains('show-sol'));
+        cards.forEach(c => { if (anyVisible) c.classList.remove('show-sol'); else c.classList.add('show-sol'); });
+    }
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+        else { if (document.exitFullscreen) document.exitFullscreen(); }
+    }
+    window.onload = () => { initGrid(); updateTimerDisplay(); };
+</script>
+</body>
+</html>
