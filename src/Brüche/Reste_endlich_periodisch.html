@@ -14,13 +14,13 @@
             --sol-color: #27ae60;
         }
         body, html {
-            margin: 0; padding: 0; height: 100vh; width: 100vw;
+            margin: 0; padding: 0; height: 100vh; height: 100dvh; width: 100vw;
             background-color: var(--bg-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden; display: flex; flex-direction: column;
         }
         header {
-            height: 70px; flex-shrink: 0; display: flex; align-items: center;
+            height: 60px; flex-shrink: 0; display: flex; align-items: center;
             justify-content: space-between; padding: 0 15px;
             background: rgba(0,0,0,0.05); border-bottom: 3px solid var(--accent-color);
             box-sizing: border-box;
@@ -40,14 +40,9 @@
         }
         .controls button:hover { background: #eee; transform: scale(1.05); }
         .back-btn { background: var(--accent-color) !important; color: white !important; font-size: 1.2rem !important; }
-        .subheader {
-            flex-shrink: 0; padding: 6px 15px; background: rgba(0,0,0,0.03);
-            border-bottom: 2px solid var(--accent-color); font-size: 0.95rem;
-            color: var(--accent-color); text-align: center; box-sizing: border-box;
-        }
         main {
-            flex-grow: 1; display: grid; grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(6, 1fr); gap: 10px; padding: 10px; box-sizing: border-box;
+            flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(6, 1fr); gap: 6px; padding: 6px; box-sizing: border-box;
         }
         .task-card {
             background: var(--card-bg); border: 3px solid var(--accent-color); border-top-width: 8px;
@@ -93,7 +88,6 @@
         <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
     </div>
 </header>
-<div class="subheader">Das sind die Reste einer schriftlichen Division. Endet die Dezimalzahl (e) oder ist sie periodisch (p)?</div>
 <main id="task-grid"></main>
 <script>
     const levels = [
