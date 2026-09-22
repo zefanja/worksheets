@@ -1,0 +1,484 @@
+<title>Dreiecksungleichung</title>
+<style>
+  :root{
+    --bg:#F1F4F8;
+    --surface:#FFFFFF;
+    --surface-2:#E7ECF2;
+    --text:#1B2430;
+    --text-muted:#56606E;
+    --border:#D4DCE4;
+    --accent:#2D5F8A;
+    --accent-soft:rgba(45,95,138,0.12);
+    --ok:#278C51;
+    --ok-soft:rgba(39,140,81,0.12);
+    --warn:#B4780A;
+    --warn-soft:rgba(180,120,10,0.13);
+    --bad:#C9463B;
+    --bad-soft:rgba(201,70,59,0.12);
+    --font-body:'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, "SFMono-Regular", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12161C; --surface:#1A212B; --surface-2:#222B37; --text:#E7EDF3; --text-muted:#93A1B0;
+      --border:#2B3542; --accent:#7FB2E8; --accent-soft:rgba(127,178,232,0.16);
+      --ok:#57C98B; --ok-soft:rgba(87,201,139,0.16);
+      --warn:#E3A63D; --warn-soft:rgba(227,166,61,0.16);
+      --bad:#F0837A; --bad-soft:rgba(240,131,122,0.16);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12161C; --surface:#1A212B; --surface-2:#222B37; --text:#E7EDF3; --text-muted:#93A1B0;
+    --border:#2B3542; --accent:#7FB2E8; --accent-soft:rgba(127,178,232,0.16);
+    --ok:#57C98B; --ok-soft:rgba(87,201,139,0.16);
+    --warn:#E3A63D; --warn-soft:rgba(227,166,61,0.16);
+    --bad:#F0837A; --bad-soft:rgba(240,131,122,0.16);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    padding-inline:16px;
+    padding-block:28px 40px;
+  }
+  .page{max-width:980px; margin:0 auto;}
+
+  .hero{margin-bottom:22px;}
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 8px;
+    font-weight:600;
+  }
+  h1{
+    font-size:clamp(28px,4.5vw,38px);
+    line-height:1.08;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+    text-wrap:balance;
+  }
+  .lede{
+    color:var(--text-muted);
+    font-size:16px;
+    line-height:1.55;
+    max-width:62ch;
+    margin:0;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:18px;
+    align-items:start;
+  }
+  @media (min-width:840px){
+    .layout{grid-template-columns:1.15fr 0.85fr;}
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+  }
+
+  .diagram-card svg{
+    width:100%;
+    height:auto;
+    display:block;
+    overflow:visible;
+  }
+
+  .status{
+    margin-top:16px;
+    border-radius:12px;
+    padding:14px 16px;
+    border:1px solid transparent;
+  }
+  .status--ok{ background:var(--ok-soft); border-color:color-mix(in srgb, var(--ok) 35%, transparent); }
+  .status--warn{ background:var(--warn-soft); border-color:color-mix(in srgb, var(--warn) 35%, transparent); }
+  .status--bad{ background:var(--bad-soft); border-color:color-mix(in srgb, var(--bad) 35%, transparent); }
+  .status-formula{
+    font-family:var(--font-mono);
+    font-size:22px;
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .status--ok .status-formula, .status--ok .status-title{ color:var(--ok); }
+  .status--warn .status-formula, .status--warn .status-title{ color:var(--warn); }
+  .status--bad .status-formula, .status--bad .status-title{ color:var(--bad); }
+  .status-title{
+    font-weight:700;
+    font-size:15px;
+    margin-top:4px;
+  }
+  .status-desc{
+    color:var(--text);
+    font-size:14px;
+    line-height:1.5;
+    margin-top:4px;
+    max-width:56ch;
+  }
+
+  .presets{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .preset-btn{
+    font-family:var(--font-body);
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:9px 12px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:2px;
+    flex:1 1 auto;
+    min-width:120px;
+    transition:background 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+  }
+  .preset-btn:hover{ border-color:var(--accent); }
+  .preset-btn:active{ transform:translateY(1px); }
+  .preset-btn span{
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+
+  .slider-group{ margin-bottom:16px; }
+  .slider-group label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .value-mono{
+    font-family:var(--font-mono);
+    font-weight:600;
+    font-size:15px;
+    color:var(--accent);
+    font-variant-numeric:tabular-nums;
+  }
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--accent);
+    height:20px;
+  }
+
+  .legend{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+  }
+  .legend h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--text-muted);
+    margin:0 0 12px;
+    font-weight:700;
+  }
+  .legend-row{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:13.5px;
+    line-height:1.5;
+    margin-bottom:10px;
+    color:var(--text);
+  }
+  .legend-row:last-child{ margin-bottom:0; }
+  .legend-row strong{ font-family:var(--font-mono); font-weight:700; }
+  .dot{
+    width:11px; height:11px; border-radius:50%;
+    margin-top:4px;
+    flex:0 0 auto;
+  }
+  .dot-ok{ background:var(--ok); }
+  .dot-warn{ background:var(--warn); }
+  .dot-bad{ background:var(--bad); }
+
+  .note{
+    margin-top:22px;
+    color:var(--text-muted);
+    font-size:13px;
+    line-height:1.6;
+    max-width:74ch;
+  }
+
+  .circle-guide{ fill:none; stroke:var(--text-muted); stroke-width:1.4; stroke-dasharray:3 5; opacity:.65; }
+  .circle-guide--bad{ stroke:var(--bad); opacity:.8; }
+  .base-line{ stroke:var(--accent); stroke-width:2.5; }
+  .tri-fill{ fill:var(--accent-soft); stroke:var(--accent); stroke-width:2.5; }
+  .deg-rod{ stroke:var(--warn); stroke-width:4; stroke-linecap:round; stroke-dasharray:1 7; }
+  .reach-rod{ stroke:var(--bad); stroke-width:3; stroke-linecap:round; }
+  .gap-bracket{ stroke:var(--bad); stroke-width:1.6; stroke-dasharray:3 4; }
+  .open-dot{ fill:var(--surface); stroke:var(--bad); stroke-width:2; }
+  .dot-vertex{ fill:var(--text); }
+  .dot-vertex-accent{ fill:var(--accent); }
+  .dot-vertex-warn{ fill:var(--warn); }
+  .svg-label{
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:600;
+    fill:var(--text);
+  }
+  .svg-label-muted{ fill:var(--text-muted); font-weight:500; font-size:12.5px; }
+  .svg-label-bad{ fill:var(--bad); font-weight:600; }
+  .svg-label-warn{ fill:var(--warn); font-weight:600; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">Geometrie · Dreieckskonstruktion</p>
+    <h1>Dreiecksungleichung</h1>
+    <p class="lede">In jedem Dreieck ist die Summe zweier Seiten stets größer als die dritte Seite. Verändere die drei Seitenlängen oder nutze die Beispiele, um alle Fälle sichtbar zu machen.</p>
+  </header>
+
+  <div class="layout">
+    <section class="card diagram-card">
+      <svg id="diagram" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Konstruktionsdiagramm des Dreiecks">
+        <g id="scene"></g>
+      </svg>
+
+      <div class="status" id="status" role="status" aria-live="polite">
+        <div class="status-formula" id="statusFormula"></div>
+        <div class="status-title" id="statusTitle"></div>
+        <div class="status-desc" id="statusDesc"></div>
+      </div>
+    </section>
+
+    <section class="card controls-card">
+      <div class="presets">
+        <button type="button" class="preset-btn" data-a="5" data-b="6" data-c="8">Gültiges Dreieck<span>a + b &gt; c</span></button>
+        <button type="button" class="preset-btn" data-a="5" data-b="6" data-c="11">Grenzfall<span>a + b = c</span></button>
+        <button type="button" class="preset-btn" data-a="5" data-b="6" data-c="12">Kein Dreieck<span>a + b &lt; c</span></button>
+      </div>
+
+      <div class="slider-group">
+        <label for="sliderA">Seite a <output id="outA" class="value-mono" for="sliderA">5</output></label>
+        <input type="range" id="sliderA" min="1" max="12" step="0.5" value="5">
+      </div>
+      <div class="slider-group">
+        <label for="sliderB">Seite b <output id="outB" class="value-mono" for="sliderB">6</output></label>
+        <input type="range" id="sliderB" min="1" max="12" step="0.5" value="6">
+      </div>
+      <div class="slider-group">
+        <label for="sliderC">Seite c (die „dritte“ Seite) <output id="outC" class="value-mono" for="sliderC">8</output></label>
+        <input type="range" id="sliderC" min="1" max="15" step="0.5" value="8">
+      </div>
+
+      <div class="legend">
+        <h2>Die drei Fälle</h2>
+        <div class="legend-row">
+          <span class="dot dot-ok"></span>
+          <div><strong>a + b &gt; c</strong> — gültiges Dreieck: die Zirkelbögen schneiden sich oberhalb der Grundlinie.</div>
+        </div>
+        <div class="legend-row">
+          <span class="dot dot-warn"></span>
+          <div><strong>a + b = c</strong> — Grenzfall: die Bögen berühren sich genau auf der Grundlinie (entartetes Dreieck).</div>
+        </div>
+        <div class="legend-row">
+          <span class="dot dot-bad"></span>
+          <div><strong>a + b &lt; c</strong> — kein Dreieck: die Bögen erreichen sich nicht.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="note">Konstruktionsprinzip: Kreis um B mit Radius a, Kreis um C mit Radius b — ihr Schnittpunkt ist die dritte Ecke des Dreiecks. Zieht man die Seiten stark auseinander (z.&nbsp;B. a sehr groß, b und c klein), zeigt das Werkzeug korrekt auch den verwandten Sonderfall |a − b| ≷ c.</footer>
+</div>
+
+<script>
+(function(){
+  var sliderA = document.getElementById('sliderA');
+  var sliderB = document.getElementById('sliderB');
+  var sliderC = document.getElementById('sliderC');
+  var outA = document.getElementById('outA');
+  var outB = document.getElementById('outB');
+  var outC = document.getElementById('outC');
+  var scene = document.getElementById('scene');
+  var statusEl = document.getElementById('status');
+  var statusFormula = document.getElementById('statusFormula');
+  var statusTitle = document.getElementById('statusTitle');
+  var statusDesc = document.getElementById('statusDesc');
+
+  var W = 600, H = 420, PAD = 56;
+  var EPS = 0.001;
+
+  function fmt(v){
+    var r = Math.round(v * 10) / 10;
+    var s = Number.isInteger(r) ? String(r) : r.toFixed(1).replace('.', ',');
+    return s;
+  }
+
+  function computeCase(a, b, c){
+    var sum = a + b, diff = Math.abs(a - b);
+    if (c > sum + EPS) return 'too-far';
+    if (Math.abs(c - sum) <= EPS) return 'eq-sum';
+    if (c < diff - EPS) return 'too-close';
+    if (Math.abs(c - diff) <= EPS) return 'eq-diff';
+    return 'valid';
+  }
+
+  function esc(s){ return s; }
+
+  function render(){
+    var a = parseFloat(sliderA.value);
+    var b = parseFloat(sliderB.value);
+    var c = parseFloat(sliderC.value);
+
+    outA.textContent = fmt(a);
+    outB.textContent = fmt(b);
+    outC.textContent = fmt(c);
+
+    var d = c;
+    var x = (d * d + a * a - b * b) / (2 * d);
+    var discRaw = a * a - x * x;
+    var diff = Math.abs(a - b);
+    var kase = computeCase(a, b, c);
+    var hasApex = (kase === 'valid' || kase === 'eq-sum' || kase === 'eq-diff');
+    var y = hasApex ? Math.sqrt(Math.max(0, discRaw)) : 0;
+
+    // bounding box in math space (B=(0,0), C=(d,0), circles radius a / b)
+    var minX = Math.min(0 - a, d - b, 0, d);
+    var maxX = Math.max(0 + a, d + b, 0, d);
+    var minY = -Math.max(a, b) - 1;
+    var maxY = Math.max(a, b) + 1;
+    var boxW = maxX - minX, boxH = maxY - minY;
+    var availW = W - 2 * PAD, availH = H - 2 * PAD;
+    var scale = Math.min(availW / boxW, availH / boxH);
+    var offsetX = PAD + (availW - boxW * scale) / 2 - minX * scale;
+    var offsetY = PAD + (availH - boxH * scale) / 2 + maxY * scale;
+
+    function px(mx){ return offsetX + mx * scale; }
+    function py(my){ return offsetY - my * scale; }
+
+    var parts = [];
+
+    // guide circles (compass arcs)
+    var circleBadClass = (kase === 'too-close' || kase === 'too-far') ? ' circle-guide--bad' : '';
+    parts.push('<circle class="circle-guide' + circleBadClass + '" cx="' + px(0) + '" cy="' + py(0) + '" r="' + (a * scale) + '"></circle>');
+    parts.push('<circle class="circle-guide' + circleBadClass + '" cx="' + px(d) + '" cy="' + py(0) + '" r="' + (b * scale) + '"></circle>');
+
+    // base line B-C
+    parts.push('<line class="base-line" x1="' + px(0) + '" y1="' + py(0) + '" x2="' + px(d) + '" y2="' + py(0) + '"></line>');
+    parts.push('<circle class="dot-vertex" cx="' + px(0) + '" cy="' + py(0) + '" r="4"></circle>');
+    parts.push('<circle class="dot-vertex" cx="' + px(d) + '" cy="' + py(0) + '" r="4"></circle>');
+    parts.push('<text class="svg-label" text-anchor="middle" x="' + px(d / 2) + '" y="' + (py(0) + 22) + '">c = ' + fmt(c) + '</text>');
+
+    // radius labels at the top of each guide circle
+    parts.push('<text class="svg-label" text-anchor="middle" x="' + px(0) + '" y="' + (py(a) - 8) + '">a = ' + fmt(a) + '</text>');
+    parts.push('<text class="svg-label" text-anchor="middle" x="' + px(d) + '" y="' + (py(b) - 8) + '">b = ' + fmt(b) + '</text>');
+
+    if (kase === 'valid'){
+      var Ax = px(x), Ay = py(y);
+      parts.push('<path class="tri-fill" d="M ' + px(0) + ' ' + py(0) + ' L ' + px(d) + ' ' + py(0) + ' L ' + Ax + ' ' + Ay + ' Z"></path>');
+      parts.push('<circle class="dot-vertex-accent" cx="' + Ax + '" cy="' + Ay + '" r="4.5"></circle>');
+    } else if (kase === 'eq-sum' || kase === 'eq-diff'){
+      // Degenerate case: A lies exactly on the line through B and C (y = 0).
+      // Draw the amber emphasis directly ON that same line — never offset —
+      // covering the full collinear extent from B, C and A together, so a
+      // point outside segment BC (the |a-b| = c sub-case) shows as a visible
+      // extension of the same straight line rather than a separate stroke.
+      var baseY = py(0);
+      var Ax2 = px(x);
+      var extentMin = Math.min(px(0), px(d), Ax2);
+      var extentMax = Math.max(px(0), px(d), Ax2);
+      parts.push('<line class="deg-rod" x1="' + extentMin + '" y1="' + baseY + '" x2="' + extentMax + '" y2="' + baseY + '"></line>');
+      parts.push('<circle class="dot-vertex-warn" cx="' + Ax2 + '" cy="' + baseY + '" r="5"></circle>');
+      parts.push('<text class="svg-label-warn" text-anchor="middle" x="' + Ax2 + '" y="' + (baseY - 12) + '">entartet</text>');
+    } else {
+      // Invalid (too-far or too-close): both sides stay hinged exactly at
+      // B and C — the base corners — like two rigid rods tilted up at a
+      // fixed angle. Since they can't reach each other, their open ends
+      // don't meet; the dashed connector and hollow dots show that gap.
+      var theta = 55 * Math.PI / 180;
+      var paMX = a * Math.cos(theta), paMY = a * Math.sin(theta);
+      var pbMX = d - b * Math.cos(theta), pbMY = b * Math.sin(theta);
+      var PaX = px(paMX), PaY = py(paMY);
+      var PbX = px(pbMX), PbY = py(pbMY);
+
+      parts.push('<line class="reach-rod" x1="' + px(0) + '" y1="' + py(0) + '" x2="' + PaX + '" y2="' + PaY + '"></line>');
+      parts.push('<line class="reach-rod" x1="' + px(d) + '" y1="' + py(0) + '" x2="' + PbX + '" y2="' + PbY + '"></line>');
+      parts.push('<line class="gap-bracket" x1="' + PaX + '" y1="' + PaY + '" x2="' + PbX + '" y2="' + PbY + '"></line>');
+      parts.push('<circle class="open-dot" cx="' + PaX + '" cy="' + PaY + '" r="5"></circle>');
+      parts.push('<circle class="open-dot" cx="' + PbX + '" cy="' + PbY + '" r="5"></circle>');
+
+      var midX = (PaX + PbX) / 2, midY = (PaY + PbY) / 2;
+      var gapLabel = (kase === 'too-far')
+        ? ('fehlt ' + fmt(d - (a + b)))
+        : ('zu lang um ' + fmt(diff - d));
+      parts.push('<text class="svg-label-bad" text-anchor="middle" x="' + midX + '" y="' + (midY - 12) + '">' + gapLabel + '</text>');
+    }
+
+    scene.innerHTML = parts.join('');
+
+    // status panel
+    var formula, title, desc, tone;
+    var fa = fmt(a), fb = fmt(b), fc = fmt(c);
+    if (kase === 'valid'){
+      formula = fa + ' + ' + fb + ' &gt; ' + fc;
+      title = 'Gültiges Dreieck';
+      desc = 'Die Summe der Seiten a und b ist größer als die dritte Seite c — die Zirkelbögen schneiden sich, es entsteht ein echtes Dreieck.';
+      tone = 'ok';
+    } else if (kase === 'eq-sum'){
+      formula = fa + ' + ' + fb + ' = ' + fc;
+      title = 'Grenzfall: entartetes Dreieck';
+      desc = 'a + b ist genau gleich c. Die Zirkelbögen berühren sich nur in einem Punkt auf der Grundlinie — kein echtes Dreieck, sondern eine Strecke.';
+      tone = 'warn';
+    } else if (kase === 'too-far'){
+      formula = fa + ' + ' + fb + ' &lt; ' + fc;
+      title = 'Kein Dreieck möglich';
+      desc = 'Die Summe von a und b reicht nicht bis zur Länge von c. Die Zirkelbögen erreichen sich nicht.';
+      tone = 'bad';
+    } else if (kase === 'eq-diff'){
+      formula = '|' + fa + ' − ' + fb + '| = ' + fc;
+      title = 'Sonderfall: entartetes Dreieck';
+      desc = 'Der Unterschied zwischen a und b ist genau so groß wie c. Auch hier liegen alle Punkte auf einer Geraden — kein echtes Dreieck.';
+      tone = 'warn';
+    } else {
+      formula = '|' + fa + ' − ' + fb + '| &gt; ' + fc;
+      title = 'Kein Dreieck möglich';
+      desc = 'Eine der Seiten a oder b ist im Vergleich zur dritten Seite zusammen mit der anderen Seite zu lang — der kleine Kreis liegt vollständig im großen, sie schneiden sich nicht.';
+      tone = 'bad';
+    }
+    statusEl.className = 'status status--' + tone;
+    statusFormula.innerHTML = formula;
+    statusTitle.textContent = title;
+    statusDesc.textContent = desc;
+  }
+
+  [sliderA, sliderB, sliderC].forEach(function(el){
+    el.addEventListener('input', render);
+  });
+
+  document.querySelectorAll('.preset-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      sliderA.value = btn.getAttribute('data-a');
+      sliderB.value = btn.getAttribute('data-b');
+      sliderC.value = btn.getAttribute('data-c');
+      render();
+    });
+  });
+
+  render();
+})();
+</script>

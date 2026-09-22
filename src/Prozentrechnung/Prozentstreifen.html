@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prozentstreifen – Klasse 7</title>
+<style>
+:root{
+  --paper:#EDEFEC;
+  --ink:#16211D;
+  --muted:#5D6B65;
+  --rule:#C6CCC7;
+  --strip:#D7DCD8;
+  --fill:#1F6F5C;
+  --q:#B3187A;
+  --ja:#1F6F5C;
+  --nein:#A02B1F;
+  --box:#E3E7E3;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:"Segoe UI","Helvetica Neue",Arial,system-ui,sans-serif;
+  font-size:clamp(15px,1.55vw,30px);
+  font-variant-numeric:tabular-nums;
+  overflow:hidden;
+}
+body.dunkel{
+  --paper:#101815;--ink:#EBEFEC;--muted:#8FA09A;--rule:#31423C;
+  --strip:#2A3833;--fill:#4FC3A1;--q:#FF6FC0;--ja:#4FC3A1;--nein:#FF8A75;--box:#1A2521;
+}
+.deck{position:relative;height:100%;width:100%}
+.slide{
+  position:absolute;inset:0;display:none;
+  flex-direction:column;
+  padding:clamp(1.1rem,3.4vh,2.6rem) clamp(1.4rem,4.4vw,4.4rem) clamp(2.6rem,6vh,3.6rem);
+}
+.slide.aktiv{display:flex}
+
+/* Kopfleiste: wo sind wir im Ablauf */
+.rail{
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+  color:var(--muted);font-size:.66em;letter-spacing:.02em;
+  padding-bottom:.5rem;border-bottom:1px solid var(--rule);flex:none;
+}
+.rail .pos{font-weight:700;color:var(--ink)}
+.rail .plutonium{color:var(--q);font-weight:700}
+
+/* Inhaltsfläche */
+.buehne{flex:1;display:flex;flex-direction:column;justify-content:center;gap:clamp(.7rem,2.4vh,1.8rem);min-height:0}
+.buehne.oben{justify-content:flex-start;padding-top:clamp(.8rem,3vh,2rem)}
+
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:2.55em;line-height:1.06;margin:0;letter-spacing:-.01em}
+h2{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:1.72em;line-height:1.15;margin:0}
+.unter{color:var(--muted);font-size:.95em;margin:0;max-width:62ch}
+.sprech{
+  font-family:Georgia,"Times New Roman",serif;font-size:1.28em;line-height:1.34;
+  border-left:4px solid var(--fill);padding-left:.85em;margin:0;max-width:44ch;
+}
+.aufgabe{font-size:1.5em;line-height:1.3;margin:0;max-width:34ch}
+.aufgabe .ganz{background:linear-gradient(transparent 58%,color-mix(in srgb,var(--q) 34%,transparent) 58%);padding:0 .08em;font-weight:700}
+.mini{color:var(--muted);font-size:.78em;margin:0}
+
+/* Urteil */
+.urteil{display:flex;align-items:center;gap:.6em;font-size:2.1em;font-weight:800;letter-spacing:.02em}
+.ja{color:var(--ja)} .nein{color:var(--nein)} .qf{color:var(--q)}
+.daumen{font-size:.8em}
+
+/* Listen */
+ol.liste,ul.liste{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:.5em;font-size:1.06em;line-height:1.28}
+ul.liste{list-style:none;padding-left:0}
+.zeile{display:flex;gap:.9em;align-items:baseline;flex-wrap:wrap;font-size:1.12em;line-height:1.25}
+.zeile .nr{color:var(--muted);font-size:.7em;min-width:2.1em;flex:none}
+.erg{color:var(--fill);font-weight:700}
+.raster2{display:grid;grid-template-columns:1fr 1fr;gap:.7em 2.2em}
+@media (max-width:820px){.raster2{grid-template-columns:1fr}}
+
+/* Prozentstreifen */
+.streifen{width:100%;max-width:min(96%,1180px);margin-inline:auto}
+.streifen svg{width:100%;height:auto;display:block;overflow:visible}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,3vw,3rem);align-items:center;width:100%}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+.duo .kopf{font-size:.8em;color:var(--muted);margin-bottom:.35em}
+
+/* Rechnungen vertikal */
+.rechnungen{display:flex;gap:clamp(1.4rem,5vw,5rem);flex-wrap:wrap;align-items:flex-start}
+.rechnung{display:grid;grid-template-columns:auto auto auto;gap:.25em .7em;align-items:center;font-size:1.4em}
+.rechnung .lab{text-align:right;color:var(--muted)}
+.rechnung .pf{color:var(--muted)}
+.bruch{display:inline-grid;justify-items:center;line-height:1.05;vertical-align:middle}
+.bruch .n{border-top:2px solid currentColor;padding-top:.06em;min-width:2.1em;text-align:center}
+.bruch .z{padding-bottom:.06em}
+.gleich{font-weight:700;color:var(--fill)}
+
+/* Kärtchen für Chaining/Prompts */
+.karten{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(180px,20vw,300px),1fr));gap:.7em}
+.karte{background:var(--box);padding:.75em .9em;font-size:.98em;line-height:1.25}
+.karte b{display:block;font-size:.74em;color:var(--muted);font-weight:700;margin-bottom:.3em}
+
+/* mehrere Streifen auf einer Folie: Streifen + Urteil als ausgerichtetes Paar */
+.kompakt .buehne{gap:clamp(.5rem,2vh,1.4rem)}
+.paar{width:min(80%,900px);margin-inline:auto;display:flex;flex-direction:column;gap:.15em}
+.paar .streifen{max-width:100%}
+.paar .urteil{font-size:1.2em;margin-left:7.84%;line-height:1}
+.paar > .f{min-height:1.2em}
+
+/* Rechnung mit Bild: Streifen links, Rechnung rechts */
+.reihen{display:flex;flex-direction:column;gap:clamp(.5rem,2.2vh,1.5rem);width:100%}
+.reihe{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:clamp(1rem,3vw,3rem);align-items:center}
+.reihe .streifen{max-width:100%}
+.reihe .rechnung{font-size:1.18em;justify-content:start}
+@media (max-width:860px){.reihe{grid-template-columns:1fr;gap:.4rem}}
+
+/* Fortschritt */
+.fuss{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:1rem;padding:0 clamp(1.4rem,4.4vw,4.4rem) .7rem}
+.balken{flex:1;height:3px;background:var(--rule)}
+.balken i{display:block;height:100%;background:var(--fill);width:0;transition:width .25s ease}
+.zaehler{color:var(--muted);font-size:.62em;flex:none}
+
+/* Fragmente */
+.f{opacity:0;transition:opacity .18s ease}
+.f.da{opacity:1}
+@media (prefers-reduced-motion:reduce){.f{transition:none}}
+
+/* Übersicht */
+.hilfe{position:absolute;inset:0;background:color-mix(in srgb,var(--paper) 96%,#000);display:none;padding:clamp(1.5rem,5vw,4rem);overflow:auto}
+.hilfe.auf{display:block}
+.hilfe h2{margin-bottom:.8em}
+.hilfe dl{display:grid;grid-template-columns:auto 1fr;gap:.45em 1.2em;font-size:1em;max-width:40ch}
+.hilfe dt{font-weight:700}
+kbd{background:var(--box);border-bottom:2px solid var(--rule);padding:.05em .45em;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- 0 -->
+<section class="slide">
+  <div class="rail"><span>Mathematik · Klasse 7 · Oberschule</span><span>Doppelstunde 90 min</span></div>
+  <div class="buehne">
+    <h1>Der Prozentstreifen</h1>
+    <p class="unter">Drei Fragen, eine Rechnung: Wie viele sind das? Wie viel Prozent sind das? Wie groß ist das Ganze?</p>
+    <div class="f"><p class="sprech">Wir zeichnen heute einen Streifen. Alles, was ihr braucht, steht darauf.</p></div>
+  </div>
+</section>
+
+<!-- 1 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">1</span> · Pre-Check</span><span>Mini-Whiteboards · 5 min</span></div>
+  <div class="buehne">
+    <h2>Aufwärmen</h2>
+    <div class="raster2">
+      <div class="zeile"><span class="nr">1</span><span>84 geteilt durch 100</span><span class="f erg">= 0,84</span></div>
+      <div class="zeile"><span class="nr">2</span><span>2,4 · 35</span><span class="f erg">= 84</span></div>
+      <div class="zeile"><span class="nr">3</span><span>1 % heißt 1 von …</span><span class="f erg">100</span></div>
+      <div class="zeile"><span class="nr">4</span><span>Streifen 0 bis 200: markiere 150</span><span class="f erg">drei Viertel</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Instruktion · Atom 2</span><span>Die ganze Menge finden</span></div>
+  <div class="buehne">
+    <h1>Ist das die ganze&nbsp;Menge?</h1>
+    <p class="sprech">Daumen hoch heißt ja. Daumen runter heißt nein.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Instruktion · Atom 2</span><span>1 von 5</span></div>
+  <div class="buehne">
+    <p class="aufgabe">In der 7a sind 25 Schüler. <span class="ganz">8</span> davon tragen eine Brille.</p>
+    <div class="f"><div class="urteil nein"><span class="daumen">▼</span> NEIN</div></div>
+    <p class="f mini">8 ist ein Teil.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Instruktion · Atom 2</span><span>2 von 5</span></div>
+  <div class="buehne">
+    <p class="aufgabe">In der 7a sind <span class="ganz">25</span> Schüler. 8 davon tragen eine Brille.</p>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA</div></div>
+    <p class="f mini">Gleicher Satz. Nur die markierte Größe ist gewandert.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Instruktion · Atom 2</span><span>3 von 5</span></div>
+  <div class="buehne">
+    <p class="aufgabe">Eine Jacke kostet <span class="ganz">80 €</span>. Im Schlussverkauf spart man 24 €.</p>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA</div></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Instruktion · Atom 2</span><span>4 von 5</span></div>
+  <div class="buehne">
+    <p class="aufgabe">Von einem Wanderweg sind 6 km geschafft. Der ganze Weg ist <span class="ganz">15 km</span> lang.</p>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA</div></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Instruktion · Atom 2</span><span>5 von 5</span></div>
+  <div class="buehne">
+    <p class="aufgabe">Von einem Wanderweg sind <span class="ganz">6 km</span> geschafft. Der ganze Weg ist 15 km lang.</p>
+    <div class="f"><div class="urteil nein"><span class="daumen">▼</span> NEIN</div></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Testing · Atom 2</span><span>Mini-Whiteboards</span></div>
+  <div class="buehne oben">
+    <h2>Ist das die ganze Menge?</h2>
+    <ul class="liste">
+      <li class="zeile"><span class="nr">T1</span><span>Ein Tank fasst 60 Liter. <b>18 Liter</b> sind noch drin.</span><span class="f urteil nein" style="font-size:1em">NEIN</span></li>
+      <li class="zeile"><span class="nr">T2</span><span>Von <b>300 Karten</b> sind 45 verkauft.</span><span class="f urteil ja" style="font-size:1em">JA</span></li>
+      <li class="zeile"><span class="nr">T3</span><span>Der Film dauert <b>90 min</b>. 36 min sind vorbei.</span><span class="f urteil ja" style="font-size:1em">JA</span></li>
+      <li class="zeile"><span class="nr">T4</span><span>Von 300 Karten sind <b>45</b> verkauft.</span><span class="f urteil nein" style="font-size:1em">NEIN</span></li>
+      <li class="zeile"><span class="nr">T5</span><span>Ein Sack wiegt <b>25 kg</b>. 4 kg werden entnommen.</span><span class="f urteil ja" style="font-size:1em">JA</span></li>
+      <li class="zeile"><span class="nr">T6</span><span>Ein Tank fasst <b>60 Liter</b>. 18 Liter sind noch drin.</span><span class="f urteil ja" style="font-size:1em">JA</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">2</span> · Expansion · Atom 2</span><span>Die ganze Menge ist manchmal gesucht</span></div>
+  <div class="buehne oben">
+    <ul class="liste">
+      <li class="zeile"><span class="nr">E1</span><span>6 von 24 Gläsern sind zerbrochen.</span><span class="f erg">24 Gläser</span></li>
+      <li class="zeile"><span class="nr">E2</span><span>18 Tore sind 40 % aller Tore der Saison.</span><span class="f erg">alle Tore der Saison</span></li>
+      <li class="zeile"><span class="nr">E3</span><span>48 Schüler sind 60 % aller Schüler.</span><span class="f erg qf">? — noch unbekannt</span></li>
+      <li class="zeile"><span class="nr">E4</span><span>Das sind 12 % — nämlich 9 Stück.</span><span class="f erg qf">? — nicht einmal benannt</span></li>
+    </ul>
+    <div class="f"><p class="sprech">Die ganze Menge gibt es immer. Manchmal ist sie das, was wir suchen.</p></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">3</span> · Instruktion · Atom 1 + 3</span><span>Die Regel des Streifens</span></div>
+  <div class="buehne">
+    <div class="streifen" data-leer data-gbottom="?"></div>
+    <div class="f"><p class="sprech">Oben die Prozente. Unten die Menge. Die ganze Menge unter die 100.</p></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">3</span> · Instruktion · Atom 1 + 3</span><span>Beispiel 1</span></div>
+  <div class="buehne">
+    <p class="aufgabe">Von 240 Schülern kommen 25 % mit dem Rad. Wie viele sind das?</p>
+    <div class="f"><div class="streifen" data-pos="25" data-top="25 %" data-bottom="?" data-gbottom="240"></div></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">3</span> · Instruktion · Atom 1 + 3</span><span>Beispiel 2</span></div>
+  <div class="buehne">
+    <p class="aufgabe">60 Schüler kommen mit dem Rad. Das sind 25 % aller Schüler. Wie viele Schüler sind es?</p>
+    <div class="f"><div class="streifen" data-pos="25" data-top="25 %" data-bottom="60" data-gbottom="?"></div></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">3</span> · Instruktion · Atom 1 + 3</span><span>Beispiel 3</span></div>
+  <div class="buehne">
+    <p class="aufgabe">Von einem 15 km langen Weg sind 4,5 km geschafft. Wie viel Prozent sind das?</p>
+    <div class="f"><div class="streifen" data-pos="30" data-top="?" data-bottom="4,5 km" data-gbottom="15 km"></div></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">3</span> · Testing · Atom 1 + 3</span><span>Zeichnen, nicht rechnen</span></div>
+  <div class="buehne oben">
+    <h2>Trag die Angaben ein.</h2>
+    <ul class="liste">
+      <li class="zeile"><span class="nr">T1</span><span>Von 400 Einwohnern sind 6,5 % unter 6 Jahre. Wie viele sind das?</span></li>
+      <li class="zeile"><span class="nr">T2</span><span>18 Tore sind 24 % aller Tore. Wie viele Tore waren es insgesamt?</span></li>
+      <li class="zeile"><span class="nr">T3</span><span>Von 240 Schülern kommen 96 mit dem Rad. Wie viel Prozent sind das?</span></li>
+      <li class="zeile"><span class="nr">T4</span><span>Ein Fahrrad kostet 380 €. 15 % werden gespart. Wie viel Euro?</span></li>
+      <li class="zeile"><span class="nr">T5</span><span>Von 25 kg werden 4 kg entnommen. Wie viel Prozent?</span></li>
+    </ul>
+    <p class="mini">Noch wird nichts gerechnet.</p>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">4</span> · Chaining A</span><span>Atom 2 + 3</span></div>
+  <div class="buehne">
+    <h2>Vom Text zum Streifen</h2>
+    <ul class="liste">
+      <li class="zeile"><span class="nr">K1</span><span>Von 240 Schülern kommen 25 % mit dem Rad.</span></li>
+      <li class="zeile"><span class="nr">K2</span><span>48 Schüler sind 60 % aller Schüler der Schule.</span></li>
+      <li class="zeile"><span class="nr">K3</span><span>Von einem 15 km langen Weg sind 4,5 km geschafft.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Instruktion · Atom 4</span><span class="plutonium">Kernentscheidung</span></div>
+  <div class="buehne">
+    <h1>Steht das Fragezeichen <span style="color:var(--q)">oben</span>?</h1>
+    <p class="sprech">Oben sind die Prozente. Unten ist die Menge. Wo steht das Fragezeichen?</p>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Instruktion · Atom 4</span><span>1 von 5</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="30" data-top="30 %" data-bottom="?" data-gbottom="90"></div>
+    <div class="f"><div class="urteil nein"><span class="daumen">▼</span> NEIN — das ? steht unten</div></div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Instruktion · Atom 4</span><span>2 von 5</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="30" data-top="?" data-bottom="27" data-gbottom="90"></div>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA</div></div>
+    <p class="f mini">Gleicher Streifen. Nur das Fragezeichen ist nach oben gewandert.</p>
+  </div>
+</section>
+
+<!-- 19 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Instruktion · Atom 4</span><span>3 von 5</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="15" data-top="?" data-bottom="1,20 €" data-gbottom="8,00 €"></div>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA</div></div>
+  </div>
+</section>
+
+<!-- 20 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Instruktion · Atom 4</span><span>4 von 5</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="90" data-top="?" data-bottom="4,5" data-gbottom="5"></div>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA</div></div>
+  </div>
+</section>
+
+<!-- 21 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Instruktion · Atom 4</span><span>5 von 5</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="90" data-top="90 %" data-bottom="4,5" data-gbottom="?"></div>
+    <div class="f"><div class="urteil nein"><span class="daumen">▼</span> NEIN — das ? steht unten</div></div>
+  </div>
+</section>
+
+<!-- 22 -->
+<section class="slide kompakt">
+  <div class="rail"><span><span class="pos">5</span> · Testing · Atom 4</span><span>T1 · T2</span></div>
+  <div class="buehne">
+    <div class="paar">
+      <div class="streifen" data-pos="40" data-top="40 %" data-bottom="?" data-gbottom="75"></div>
+      <div class="f"><div class="urteil nein">unten</div></div>
+    </div>
+    <div class="f paar">
+      <div class="streifen" data-pos="24" data-top="?" data-bottom="18" data-gbottom="75"></div>
+      <div class="f"><div class="urteil ja">oben</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 23 -->
+<section class="slide kompakt">
+  <div class="rail"><span><span class="pos">5</span> · Testing · Atom 4</span><span>T3 · T4</span></div>
+  <div class="buehne">
+    <div class="paar">
+      <div class="streifen" data-pos="12" data-top="12 %" data-bottom="6" data-gbottom="?"></div>
+      <div class="f"><div class="urteil nein">unten</div></div>
+    </div>
+    <div class="f paar">
+      <div class="streifen" data-pos="70" data-top="?" data-bottom="6,3" data-gbottom="9"></div>
+      <div class="f"><div class="urteil ja">oben</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 23b -->
+<section class="slide kompakt">
+  <div class="rail"><span><span class="pos">5</span> · Testing · Atom 4</span><span>T5 · T6</span></div>
+  <div class="buehne">
+    <div class="paar">
+      <div class="streifen" data-pos="80" data-top="80 %" data-bottom="?" data-gbottom="45"></div>
+      <div class="f"><div class="urteil nein">unten</div></div>
+    </div>
+    <div class="f paar">
+      <div class="streifen" data-pos="55" data-top="55 %" data-bottom="11" data-gbottom="?"></div>
+      <div class="f"><div class="urteil nein">unten</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 24 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">5</span> · Expansion · Atom 4</span><span>Mehr als das Ganze</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="140" data-uber="140" data-top="?" data-bottom="210" data-gbottom="150"></div>
+    <div class="f"><div class="urteil ja"><span class="daumen">▲</span> JA — und mehr als 100 %</div></div>
+  </div>
+</section>
+
+<!-- 25 -->
+<section class="slide">
+  <div class="rail"><span>Schnitt nach 45 min</span><span>Pause</span></div>
+  <div class="buehne">
+    <h1>Kurz durchatmen.</h1>
+    <p class="unter">Danach: der eine Zwischenschritt, der alle drei Fragen gleich macht.</p>
+  </div>
+</section>
+
+<!-- 26 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">6</span> · Instruktion · Atom 5</span><span>Der Wert von 1 %</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-pos="25" data-top="25 %" data-bottom="60" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">25 %</span><span class="pf">→</span><span>60</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">60</span><span class="n">25</span></span> <span class="gleich">= 2,4</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-pos="40" data-top="40 %" data-bottom="60" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">40 %</span><span class="pf">→</span><span>60</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">60</span><span class="n">40</span></span> <span class="gleich">= 1,5</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-gbottom="85"></div>
+        <div class="rechnung">
+          <span class="lab">100 %</span><span class="pf">→</span><span>85</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">85</span><span class="n">100</span></span> <span class="gleich">= 0,85</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="f"><p class="sprech">Such die Stelle, wo oben und unten eine Zahl steht. Teile die untere Zahl durch die Prozentzahl.</p></div>
+  </div>
+</section>
+
+<!-- 27 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">6</span> · Testing · Atom 5</span><span>T1 · T2 · T3</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-pos="20" data-top="20 %" data-bottom="35" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">20 %</span><span class="pf">→</span><span>35</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">35</span><span class="n">20</span></span> <span class="gleich">= 1,75</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-gbottom="64"></div>
+        <div class="rechnung">
+          <span class="lab">100 %</span><span class="pf">→</span><span>64</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">64</span><span class="n">100</span></span> <span class="gleich">= 0,64</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-pos="8" data-top="8 %" data-bottom="6" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">8 %</span><span class="pf">→</span><span>6</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">6</span><span class="n">8</span></span> <span class="gleich">= 0,75</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 27b -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">6</span> · Testing · Atom 5</span><span>T4 · T5 · T6</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-pos="50" data-top="50 %" data-bottom="17" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">50 %</span><span class="pf">→</span><span>17</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">17</span><span class="n">50</span></span> <span class="gleich">= 0,34</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-gbottom="9,5"></div>
+        <div class="rechnung">
+          <span class="lab">100 %</span><span class="pf">→</span><span>9,5</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">9,5</span><span class="n">100</span></span> <span class="gleich">= 0,095</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-pos="16" data-top="16 %" data-bottom="40" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">16 %</span><span class="pf">→</span><span>40</span>
+          <span class="lab">1 %</span><span class="pf">→</span><span class="f"><span class="bruch"><span class="z">40</span><span class="n">16</span></span> <span class="gleich">= 2,5</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 28 -->
+<section class="slide kompakt">
+  <div class="rail"><span><span class="pos">7</span> · Chaining B</span><span>Atom 4 + 5</span></div>
+  <div class="buehne">
+    <h2 style="width:min(80%,900px);margin-inline:auto">Wo steht das ? — und wie viel ist 1 %?</h2>
+    <div class="paar">
+      <div class="streifen" data-pos="30" data-top="30 %" data-bottom="?" data-gbottom="90"></div>
+      <div class="f"><div class="urteil"><span class="nein">unten</span><span class="erg">1 % = 0,9</span></div></div>
+    </div>
+    <div class="f paar">
+      <div class="streifen" data-pos="24" data-top="?" data-bottom="18" data-gbottom="75"></div>
+      <div class="f"><div class="urteil"><span class="ja">oben</span><span class="erg">1 % = 0,75</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 29 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">8</span> · Instruktion · Atom 6a</span><span>Fragezeichen unten</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-pos="35" data-top="35 %" data-bottom="?" data-gbottom="" data-eins="2,4"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>2,4</span>
+          <span class="lab">35 %</span><span class="pf">→</span><span class="f">2,4 · 35 <span class="gleich">= 84</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-pos="8" data-top="8 %" data-bottom="?" data-gbottom="" data-eins="2,4"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>2,4</span>
+          <span class="lab">8 %</span><span class="pf">→</span><span class="f">2,4 · 8 <span class="gleich">= 19,2</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-gbottom="?" data-eins="0,45"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,45</span>
+          <span class="lab">100 %</span><span class="pf">→</span><span class="f">0,45 · 100 <span class="gleich">= 45</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="f"><p class="sprech">Das Fragezeichen steht unten. Nimm 1 % mal die Prozentzahl.</p></div>
+  </div>
+</section>
+
+<!-- 30 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">8</span> · Testing · Atom 6a</span><span>T1 · T2 · T3</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-pos="24" data-top="24 %" data-bottom="?" data-gbottom="" data-eins="0,75"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,75</span>
+          <span class="lab">24 %</span><span class="pf">→</span><span class="f">0,75 · 24 <span class="gleich">= 18</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-gbottom="?" data-eins="3,2"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>3,2</span>
+          <span class="lab">100 %</span><span class="pf">→</span><span class="f">3,2 · 100 <span class="gleich">= 320</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-pos="30" data-top="30 %" data-bottom="?" data-gbottom="" data-eins="0,9"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,9</span>
+          <span class="lab">30 %</span><span class="pf">→</span><span class="f">0,9 · 30 <span class="gleich">= 27</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 30b -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">8</span> · Testing · Atom 6a</span><span>T4 · T5 · T6</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-gbottom="?" data-eins="0,065"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,065</span>
+          <span class="lab">100 %</span><span class="pf">→</span><span class="f">0,065 · 100 <span class="gleich">= 6,5</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-pos="60" data-top="60 %" data-bottom="?" data-gbottom="" data-eins="1,5"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>1,5</span>
+          <span class="lab">60 %</span><span class="pf">→</span><span class="f">1,5 · 60 <span class="gleich">= 90</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-gbottom="?" data-eins="0,4"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,4</span>
+          <span class="lab">100 %</span><span class="pf">→</span><span class="f">0,4 · 100 <span class="gleich">= 40</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 31 -->
+<section class="slide kompakt">
+  <div class="rail"><span><span class="pos">9</span> · Chaining C</span><span>Atom 4 + 5 + 6a</span></div>
+  <div class="buehne">
+    <div class="paar">
+      <div class="streifen" data-pos="25" data-top="25 %" data-bottom="?" data-gbottom="240"></div>
+      <div class="f"><div class="urteil"><span class="nein">unten</span><span class="erg">1 % = 2,4</span><span class="erg">? = 60</span></div></div>
+    </div>
+    <div class="f paar">
+      <div class="streifen" data-pos="40" data-top="40 %" data-bottom="96" data-gbottom="?"></div>
+      <div class="f"><div class="urteil"><span class="nein">unten</span><span class="erg">1 % = 2,4</span><span class="erg">? = 240</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 32 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">9</span> · Chaining C</span><span>Der Punkt der Stunde</span></div>
+  <div class="buehne">
+    <h1>Zwei verschiedene Aufgaben.<br>Dieselben drei Schritte.</h1>
+    <div class="f"><p class="sprech">Fragezeichen finden. 1 % ausrechnen. Hochrechnen.</p></div>
+  </div>
+</section>
+
+<!-- 33 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">10</span> · Pre-Check</span><span>Teilen durch eine Dezimalzahl</span></div>
+  <div class="buehne">
+    <h2>84 geteilt durch 2,4</h2>
+    <div class="f"><div class="urteil erg" style="font-size:2.4em">35</div></div>
+    <p class="f mini">Beide Zahlen mal 10: 840 geteilt durch 24.</p>
+  </div>
+</section>
+
+<!-- 33b -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">10</span> · Instruktion · Atom 6b</span><span>Fragezeichen oben</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-eins="2,4" data-pos="35" data-top="?" data-bottom="84" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>2,4</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>84</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">84</span><span class="n">2,4</span></span> <span class="gleich">= 35 %</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-eins="2,4" data-pos="12.5" data-top="?" data-bottom="30" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>2,4</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>30</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">30</span><span class="n">2,4</span></span> <span class="gleich">= 12,5 %</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-eins="0,45" data-gtop="?" data-gbottom="45"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,45</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>45</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">45</span><span class="n">0,45</span></span> <span class="gleich">= 100 %</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="f"><p class="sprech">Das Fragezeichen steht oben. Teile die Menge durch 1 %. Heraus kommt eine Prozentzahl.</p></div>
+  </div>
+</section>
+
+<!-- 34 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">10</span> · Testing · Atom 6b</span><span>T1 · T2 · T3</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-eins="2,4" data-pos="40" data-top="?" data-bottom="96" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>2,4</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>96</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">96</span><span class="n">2,4</span></span> <span class="gleich">= 40 %</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-eins="0,15" data-pos="30" data-top="?" data-bottom="4,5" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,15</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>4,5</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">4,5</span><span class="n">0,15</span></span> <span class="gleich">= 30 %</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-eins="0,25" data-pos="16" data-top="?" data-bottom="4" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,25</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>4</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">4</span><span class="n">0,25</span></span> <span class="gleich">= 16 %</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 34b -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">10</span> · Testing · Atom 6b</span><span>T4 · T5</span></div>
+  <div class="buehne">
+    <div class="reihen">
+      <div class="reihe">
+        <div class="streifen" data-flach data-eins="3" data-gtop="?" data-gbottom="300"></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>3</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>300</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">300</span><span class="n">3</span></span> <span class="gleich">= 100 %</span></span>
+        </div>
+      </div>
+      <div class="f reihe">
+        <div class="streifen" data-flach data-eins="0,8" data-pos="75" data-top="?" data-bottom="60" data-gbottom=""></div>
+        <div class="rechnung">
+          <span class="lab">1 %</span><span class="pf">→</span><span>0,8</span>
+          <span class="lab qf">?</span><span class="pf">→</span><span>60</span>
+          <span></span><span></span><span class="f"><span class="bruch"><span class="z">60</span><span class="n">0,8</span></span> <span class="gleich">= 75 %</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 35 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">11</span> · Full Chain</span><span>Erst laut, dann leise</span></div>
+  <div class="buehne oben">
+    <h2>Die ganze Kette</h2>
+    <div class="karten">
+      <div class="karte"><b>Schritt 1</b>Zeichnet den Streifen.</div>
+      <div class="karte"><b>Schritt 2</b>Welche Größe ist die ganze Menge?</div>
+      <div class="karte"><b>Schritt 3</b>Tragt alles ein.</div>
+      <div class="karte"><b>Schritt 4</b>Oben oder unten?</div>
+      <div class="karte"><b>Schritt 5</b>Wie viel ist 1 %?</div>
+      <div class="karte"><b>Schritt 6</b>Rechnet.</div>
+      <div class="karte"><b>Schritt 7</b>Antwortsatz.</div>
+    </div>
+    <div class="f"><p class="sprech">Zeichne den Prozentstreifen und berechne.</p></div>
+  </div>
+</section>
+
+<!-- 36 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">11</span> · Begriffe</span><span>Namen für Bekanntes</span></div>
+  <div class="buehne">
+    <div class="streifen" data-pos="25" data-top="25 %" data-bottom="60" data-gbottom="240" data-namen></div>
+    <div class="f"><ul class="liste">
+      <li><b>Grundwert G</b> — die ganze Menge unter der 100 %</li>
+      <li><b>Prozentwert W</b> — die Menge, die zur Prozentzahl gehört</li>
+      <li><b>Prozentsatz p</b> — die Zahl oben mit dem Prozentzeichen</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 37 -->
+<section class="slide">
+  <div class="rail"><span><span class="pos">12</span> · Übung</span><span>Zeichne den Prozentstreifen und berechne.</span></div>
+  <div class="buehne oben">
+    <ol class="liste">
+      <li>Von 240 Schülern einer Schule kommen 25 % mit dem Rad. Wie viele sind das?</li>
+      <li>Von 240 Schülern einer Schule kommen 45 % mit dem Rad. Wie viele sind das?</li>
+      <li>Von 240 Schülern einer Schule kommen 96 mit dem Rad. Wie viel Prozent sind das?</li>
+      <li>96 Schüler kommen mit dem Rad. Das sind 40 % aller Schüler. Wie viele Schüler hat die Schule?</li>
+      <li>Von einem 15 km langen Wanderweg sind 4,5 km geschafft. Wie viel Prozent sind das?</li>
+      <li>6,5 % der 400 Einwohner eines Dorfes sind unter 6 Jahre. Wie viele sind das?</li>
+      <li>18 Tore sind 24 % aller Tore einer Saison. Wie viele Tore waren es insgesamt?</li>
+      <li>Ein Sack wiegt 25 kg. 4 kg werden entnommen. Wie viel Prozent des Sacks sind das?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 38 -->
+<section class="slide">
+  <div class="rail"><span>Hausaufgabe</span><span>Lösungen</span></div>
+  <div class="buehne">
+    <h2>Aufgaben 5 bis 8</h2>
+    <p class="unter">Dazu je eine selbst erfundene Aufgabe: eine mit dem Fragezeichen oben, eine mit dem Fragezeichen unten.</p>
+    <div class="f"><div class="raster2" style="font-size:.95em">
+      <div class="zeile"><span class="nr">1</span><span class="erg">60</span><span class="nr">2</span><span class="erg">108</span></div>
+      <div class="zeile"><span class="nr">3</span><span class="erg">40 %</span><span class="nr">4</span><span class="erg">240</span></div>
+      <div class="zeile"><span class="nr">5</span><span class="erg">30 %</span><span class="nr">6</span><span class="erg">26</span></div>
+      <div class="zeile"><span class="nr">7</span><span class="erg">75</span><span class="nr">8</span><span class="erg">16 %</span></div>
+    </div></div>
+  </div>
+</section>
+
+</div>
+
+<div class="fuss"><div class="balken"><i id="fortschritt"></i></div><div class="zaehler" id="zaehler"></div></div>
+
+<div class="hilfe" id="hilfe">
+  <h2>Steuerung</h2>
+  <dl>
+    <dt><kbd>→</kbd> <kbd>Leertaste</kbd></dt><dd>weiter (erst Einblendungen, dann nächste Folie)</dd>
+    <dt><kbd>←</kbd></dt><dd>zurück</dd>
+    <dt><kbd>↓</kbd> <kbd>↑</kbd></dt><dd>Folie überspringen</dd>
+    <dt><kbd>F</kbd></dt><dd>Vollbild</dd>
+    <dt><kbd>D</kbd></dt><dd>dunkler Raum</dd>
+    <dt><kbd>Pos1</kbd> <kbd>Ende</kbd></dt><dd>erste / letzte Folie</dd>
+    <dt><kbd>?</kbd></dt><dd>diese Hilfe</dd>
+  </dl>
+  <p class="mini" style="margin-top:1.4em">Klick auf die rechte Bildhälfte: weiter. Linke Hälfte: zurück.</p>
+</div>
+
+<script>
+(function(){
+  /* ---------- Prozentstreifen als SVG ---------- */
+  var X0=80, X1=940, BR=X1-X0, YT=96, H=62;
+
+  function txt(x,y,s,cls,anchor){
+    if(s===null||s===undefined||s==='') return '';
+    var f = (s==='?') ? ' class="q"' : (cls?' class="'+cls+'"':'');
+    return '<text x="'+x+'" y="'+y+'" text-anchor="'+(anchor||'middle')+'"'+f+'>'+s+'</text>';
+  }
+
+  function baue(el){
+    var leer  = el.hasAttribute('data-leer');
+    var flach = el.hasAttribute('data-flach');
+    var pos   = parseFloat(el.dataset.pos);
+    var uber  = parseFloat(el.dataset.uber);
+    var skalaMax = isNaN(uber) ? 100 : uber;
+    var hatMarke = !leer && !isNaN(pos);
+    var top    = el.dataset.top || '';
+    var bottom = el.dataset.bottom || '';
+    var gtop   = (el.dataset.gtop !== undefined) ? el.dataset.gtop : '100 %';
+    var gbot   = el.dataset.gbottom || '';
+    var eins   = el.dataset.eins || '';
+    var namen  = el.hasAttribute('data-namen');
+
+    var YT = flach ? 62 : 96;
+    var H  = flach ? 46 : 62;
+    var oben = YT - (flach ? 28 : 36);
+    var unten = YT + H + (flach ? 48 : 62);
+    var basis = flach ? 176 : 215;
+    var fs  = flach ? 38 : 34;
+
+    var x100 = X0 + BR*(100/skalaMax);
+    var mx   = hatMarke ? X0 + BR*(pos/skalaMax) : null;
+    var xe   = X0 + BR*(1/skalaMax);
+
+    var nah = hatMarke && (Math.abs(mx-X0) < 170 || Math.abs(x100-mx) < 170);
+    var dy  = nah ? (flach ? 44 : 50) : 0;
+    var padO = dy, padU = dy;
+    var yEins = unten + (flach ? 54 : 58);
+    if(eins) padU = Math.max(padU, (yEins - unten) + 24);
+    if(namen) { padO = Math.max(padO, 40); padU = Math.max(padU, 46); }
+
+    var s = '<svg viewBox="0 '+(-padO)+' 1020 '+(basis+padO+padU)+'" role="img" aria-label="Prozentstreifen">';
+    s += '<style>text{font-family:inherit;font-size:'+fs+'px;fill:currentColor;font-variant-numeric:tabular-nums}'
+       + 'text.q{fill:var(--q);font-weight:800;font-size:'+(fs+8)+'px}'
+       + 'text.eins{fill:var(--q);font-weight:700;font-size:'+(fs-4)+'px}'
+       + 'text.nam{font-size:26px;fill:var(--fill);font-weight:700;letter-spacing:.06em}</style>';
+
+    s += '<rect x="'+X0+'" y="'+YT+'" width="'+BR+'" height="'+H+'" fill="var(--strip)"/>';
+    if(hatMarke) s += '<rect class="fuellung" x="'+X0+'" y="'+YT+'" width="0" height="'+H+'" fill="var(--fill)" opacity=".3" data-ziel="'+(mx-X0)+'"/>';
+    if(eins) s += '<rect x="'+X0+'" y="'+YT+'" width="'+(xe-X0)+'" height="'+H+'" fill="var(--q)" opacity=".9"/>';
+    if(!isNaN(uber)) s += '<line x1="'+x100+'" y1="'+(YT-26)+'" x2="'+x100+'" y2="'+(YT+H+26)+'" stroke="var(--muted)" stroke-width="3" stroke-dasharray="7 7"/>';
+    s += '<rect x="'+X0+'" y="'+YT+'" width="'+BR+'" height="'+H+'" fill="none" stroke="var(--ink)" stroke-width="3"/>';
+    s += '<line x1="'+X0+'" y1="'+(YT-22)+'" x2="'+X0+'" y2="'+(YT+H+22)+'" stroke="var(--ink)" stroke-width="3"/>';
+    s += '<line x1="'+x100+'" y1="'+(YT-22)+'" x2="'+x100+'" y2="'+(YT+H+22)+'" stroke="var(--ink)" stroke-width="3"/>';
+    if(hatMarke && Math.abs(mx-x100)>6 && Math.abs(mx-X0)>6)
+      s += '<line x1="'+mx+'" y1="'+(YT-30)+'" x2="'+mx+'" y2="'+(YT+H+30)+'" stroke="var(--q)" stroke-width="4"/>';
+
+    s += txt(X0,oben,'0 %');
+    s += txt(x100,oben,gtop);
+    if(hatMarke && top) s += txt(mx, oben-dy, top);
+    s += txt(X0,unten,'0');
+    s += txt(x100,unten,gbot);
+    if(hatMarke && bottom) s += txt(mx, unten+dy, bottom);
+
+    if(eins){
+      s += '<line x1="'+xe+'" y1="'+(YT+H)+'" x2="'+xe+'" y2="'+(yEins-12)+'" stroke="var(--q)" stroke-width="3"/>';
+      s += '<text x="'+(xe+16)+'" y="'+yEins+'" text-anchor="start" class="eins">1 % = '+eins+'</text>';
+    }
+    if(namen){
+      s += txt(x100, oben-36, 'p', 'nam');
+      if(hatMarke) s += txt(mx, oben-36, 'p', 'nam');
+      if(hatMarke) s += txt(mx, unten+40, 'W', 'nam');
+      s += txt(x100, unten+40, 'G', 'nam');
+    }
+    s += '</svg>';
+    el.innerHTML = s;
+  }
+
+  [].forEach.call(document.querySelectorAll('.streifen'), baue);
+
+  /* Füllung animieren, sobald der Streifen sichtbar wird */
+  function fuellen(wurzel, an){
+    [].forEach.call(wurzel.querySelectorAll('.fuellung'), function(r){
+      var ziel = r.getAttribute('data-ziel');
+      if(!an){ r.setAttribute('width','0'); return; }
+      r.setAttribute('width','0');
+      requestAnimationFrame(function(){
+        r.style.transition = reduziert ? 'none' : 'width .62s cubic-bezier(.22,.7,.2,1)';
+        r.setAttribute('width', ziel);
+      });
+    });
+  }
+
+  var reduziert = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Navigation ---------- */
+  var folien = [].slice.call(document.querySelectorAll('.slide'));
+  var i = 0, schritt = 0;
+  var balken = document.getElementById('fortschritt');
+  var zaehler = document.getElementById('zaehler');
+  var hilfe = document.getElementById('hilfe');
+
+  function frags(){ return [].slice.call(folien[i].querySelectorAll('.f')); }
+
+  function zeichne(mitFuellung){
+    folien.forEach(function(s,n){ s.classList.toggle('aktiv', n===i); });
+    frags().forEach(function(f,n){ f.classList.toggle('da', n<schritt); });
+    balken.style.width = ((i)/(folien.length-1)*100)+'%';
+    zaehler.textContent = (i+1)+' / '+folien.length;
+    if(mitFuellung) fuellen(folien[i], true);
+    try{ location.hash = 'f'+(i+1); }catch(e){}
+  }
+
+  function vor(){
+    if(schritt < frags().length){ 
+      schritt++; 
+      var neu = frags()[schritt-1];
+      neu.classList.add('da');
+      fuellen(neu, true);
+      return;
+    }
+    if(i < folien.length-1){ i++; schritt=0; zeichne(true); }
+  }
+  function zurueck(){
+    if(schritt > 0){ schritt--; frags()[schritt].classList.remove('da'); return; }
+    if(i > 0){
+      i--;
+      folien.forEach(function(s,n){ s.classList.toggle('aktiv', n===i); });
+      schritt = frags().length;
+      zeichne(true);
+    }
+  }
+  function folie(n){ i = Math.max(0, Math.min(folien.length-1, n)); schritt = 0; zeichne(true); }
+
+  document.addEventListener('keydown', function(e){
+    if(hilfe.classList.contains('auf') && e.key!=='?' && e.key!=='Escape') return;
+    switch(e.key){
+      case 'ArrowRight': case ' ': case 'PageDown': case 'Enter': e.preventDefault(); vor(); break;
+      case 'ArrowLeft': case 'Backspace': case 'PageUp': e.preventDefault(); zurueck(); break;
+      case 'ArrowDown': e.preventDefault(); folie(i+1); break;
+      case 'ArrowUp': e.preventDefault(); folie(i-1); break;
+      case 'Home': e.preventDefault(); folie(0); break;
+      case 'End': e.preventDefault(); folie(folien.length-1); break;
+      case 'f': case 'F':
+        if(document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+        break;
+      case 'd': case 'D': document.body.classList.toggle('dunkel'); break;
+      case '?': hilfe.classList.toggle('auf'); break;
+      case 'Escape': hilfe.classList.remove('auf'); break;
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    if(hilfe.classList.contains('auf')){ hilfe.classList.remove('auf'); return; }
+    if(e.clientX > window.innerWidth*0.35) vor(); else zurueck();
+  });
+
+  var startX = null;
+  document.addEventListener('touchstart', function(e){ startX = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(startX===null) return;
+    var d = e.changedTouches[0].clientX - startX;
+    if(Math.abs(d) > 50){ d < 0 ? vor() : zurueck(); }
+    startX = null;
+  }, {passive:true});
+
+  var start = parseInt((location.hash||'').replace('#f',''),10);
+  if(!isNaN(start) && start>0) i = Math.min(folien.length-1, start-1);
+  zeichne(true);
+})();
+</script>
+</body>
+</html>
