@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kongruenzsätze – Kärtchen</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d2433; --line:#d7dde5; --soft:#f3f5f8;
+  --accent:#1f5fbf; --trap:#c9660c; --ok:#1a7a4c; --bad:#b3261e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#fff;color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+
+#tabs{display:flex;gap:8px;padding:14px 16px 0;border-bottom:1px solid var(--line)}
+.tab{font:inherit;font-size:16px;font-weight:700;background:none;border:none;border-bottom:3px solid transparent;
+     padding:8px 6px 12px;color:#5b6475;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--ink)}
+.tab:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+#stage{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;gap:36px;flex-wrap:wrap;overflow:auto}
+#figure{flex:0 0 auto}
+#figure svg{width:min(46vw,360px);height:auto;display:block}
+
+#panel{flex:1 1 320px;max-width:520px;min-width:260px}
+#cardlabel{font-size:14px;color:#5b6475;font-weight:700;letter-spacing:.02em}
+#given{margin:10px 0 18px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;background:var(--soft);border:1px solid var(--line);
+      border-radius:8px;padding:6px 12px;font-size:19px}
+.chip b{color:var(--accent);font-size:19px}
+.prompt{font-size:21px;line-height:1.5;margin:0 0 18px}
+
+#reveal{border-top:1px solid var(--line);padding-top:14px;min-height:96px}
+.answer-type{display:none;font-size:26px;font-weight:700;margin:0 0 6px}
+.answer-type.ok{color:var(--ok)}
+.answer-type.bad{color:var(--bad)}
+.answer-note{display:none;font-size:17px;line-height:1.5;color:#3a4257}
+.shown .answer-type,.shown .answer-note{display:block}
+
+#bar{border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}
+button.nav{font:inherit;font-size:16px;border:1px solid var(--line);background:#fff;color:var(--ink);
+     padding:8px 14px;border-radius:6px;cursor:pointer}
+button.nav:hover{background:var(--soft)}
+button.nav:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.nav:disabled{opacity:.35;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#where{font-weight:700;font-size:16px}
+#where small{font-weight:400;color:#5b6475;margin-left:.4em}
+.spacer{flex:1}
+
+@media (max-width:760px){
+  #stage{flex-direction:column;gap:18px;padding:12px}
+  #figure svg{width:70vw}
+  #panel{max-width:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="tabs" role="tablist" aria-label="Abschnitt">
+    <button class="tab" data-sec="einfuehrung" role="tab">Einführung</button>
+    <button class="tab" data-sec="testing" role="tab">Testing</button>
+    <button class="tab" data-sec="uebung" role="tab">Übung</button>
+  </div>
+
+  <div id="stage">
+    <div id="figure"></div>
+    <div id="panel">
+      <div id="cardlabel"></div>
+      <p class="prompt" id="prompt"></p>
+      <div id="given"></div>
+      <div id="reveal">
+        <p class="answer-type" id="atype"></p>
+        <p class="answer-note" id="anote"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="bar">
+    <button class="nav" id="prev" aria-label="Vorige Karte">◀</button>
+    <button class="nav" id="next" aria-label="Nächste Karte">▶</button>
+    <div id="where"></div>
+    <div class="spacer"></div>
+    <button class="nav primary" id="revealBtn" aria-pressed="false">Lösung zeigen</button>
+  </div>
+</div>
+
+<script>
+/* ---------- Dreiecks-Schema (unregelmäßig, per Vektorrechnung) ---------- */
+// A oben links, B unten links, C rechts – bewusst ungleiche Seitenlängen
+// Seite a = BC (gegenüber A/α), b = AC (gegenüber B/β), c = AB (gegenüber C/γ)
+const A=[80,45], B=[35,265], C=[280,225];
+
+const sub=(p,q)=>[p[0]-q[0],p[1]-q[1]];
+const add=(p,q)=>[p[0]+q[0],p[1]+q[1]];
+const scl=(p,s)=>[p[0]*s,p[1]*s];
+const len=p=>Math.hypot(p[0],p[1]);
+const unit=p=>{const l=len(p)||1; return [p[0]/l,p[1]/l];};
+
+const G = scl(add(add(A,B),C), 1/3); // Schwerpunkt = Innenrichtung
+
+// Winkelbogen + Beschriftungsposition an Ecke V (Nachbarecken P, Q):
+// Bogen wird bewusst über den Schwerpunkt gezogen, damit er IMMER ins Innere
+// des Dreiecks zeigt, unabhängig von Form/Orientierung des Dreiecks.
+function vertexGeom(V,P,Q){
+  const r=26;
+  const p1=add(V, scl(unit(sub(P,V)), r));
+  const p2=add(V, scl(unit(sub(Q,V)), r));
+  const mid=scl(add(p1,p2),0.5);
+  const uVG=unit(sub(G,V));
+  const ctrl=add(mid, scl(uVG,14));
+  const arcPath=`M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${ctrl[0].toFixed(1)} ${ctrl[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  return { arcPath, labelPos: add(V, scl(uVG,42)), vertexLabelPos: add(V, scl(uVG,-20)) };
+}
+// Seitenmitte + Beschriftungsposition für Seite gegenüber P,Q (also Kante P–Q):
+function sideGeom(P,Q){
+  const mid=scl(add(P,Q),0.5);
+  const uGM=unit(sub(mid,G));
+  return { labelPos: add(mid, scl(uGM,20)) };
+}
+
+const gA=vertexGeom(A,B,C), gB=vertexGeom(B,A,C), gC=vertexGeom(C,A,B);
+const sA=sideGeom(B,C), sB=sideGeom(A,C), sC=sideGeom(A,B); // a,b,c
+
+const midAB=sC.labelPos, midAC=sB.labelPos, midBC=sA.labelPos;
+const arcA=gA.arcPath, arcB=gB.arcPath, arcC=gC.arcPath;
+
+function line(p1,p2,given){
+  return `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}"
+    stroke="${given?'#1f5fbf':'#c3cad6'}" stroke-width="${given?5:2}" stroke-linecap="round"/>`;
+}
+function arc(d,given){
+  return `<path d="${d}" fill="none" stroke="${given?'#1f5fbf':'#c3cad6'}" stroke-width="${given?4:2}"/>`;
+}
+function label(pos,text,given,val){
+  const col = given?'#1f5fbf':'#8b93a3';
+  const w = given?700:400;
+  let out = `<text x="${pos[0]}" y="${pos[1]}" text-anchor="middle" font-size="20" font-weight="${w}" fill="${col}">${text}</text>`;
+  return out;
+}
+
+// given: object with keys among a,b,c,alpha,beta,gamma -> value string (or true for "given, no numeric value shown separately")
+function drawTriangle(given){
+  const g = k=>given.hasOwnProperty(k);
+  let svg = `<svg viewBox="-15 0 340 310" xmlns="http://www.w3.org/2000/svg">`;
+  svg += line(A,B,g('c'));
+  svg += line(A,C,g('b'));
+  svg += line(B,C,g('a'));
+  svg += arc(arcA,g('alpha'));
+  svg += arc(arcB,g('beta'));
+  svg += arc(arcC,g('gamma'));
+  // Eckpunkte
+  svg += `<circle cx="${A[0]}" cy="${A[1]}" r="3.5" fill="#1d2433"/>`;
+  svg += `<circle cx="${B[0]}" cy="${B[1]}" r="3.5" fill="#1d2433"/>`;
+  svg += `<circle cx="${C[0]}" cy="${C[1]}" r="3.5" fill="#1d2433"/>`;
+  svg += `<text x="${gA.vertexLabelPos[0]}" y="${gA.vertexLabelPos[1]}" text-anchor="middle" font-size="18" font-weight="700" fill="#1d2433">A</text>`;
+  svg += `<text x="${gB.vertexLabelPos[0]}" y="${gB.vertexLabelPos[1]}" text-anchor="middle" font-size="18" font-weight="700" fill="#1d2433">B</text>`;
+  svg += `<text x="${gC.vertexLabelPos[0]}" y="${gC.vertexLabelPos[1]}" text-anchor="middle" font-size="18" font-weight="700" fill="#1d2433">C</text>`;
+  // Seiten-/Winkel-Buchstaben
+  svg += label(midAB,'c',g('c'));
+  svg += label(midAC,'b',g('b'));
+  svg += label(midBC,'a',g('a'));
+  svg += label(gA.labelPos,'α',g('alpha'));
+  svg += label(gB.labelPos,'β',g('beta'));
+  svg += label(gC.labelPos,'γ',g('gamma'));
+  svg += `</svg>`;
+  return svg;
+}
+
+/* ---------- Kartendaten ---------- */
+const TYPE_NAME = {
+  SSS:"SSS", SWS:"SWS", WSW:"WSW",
+  SSW:"kein Kongruenzsatz", WWW:"kein Kongruenzsatz", UNVOLLSTAENDIG:"unvollständig"
+};
+const TYPE_OK = { SSS:true, SWS:true, WSW:true, SSW:false, WWW:false, UNVOLLSTAENDIG:false };
+
+function C_(sec,label,prompt,given,type,note){
+  return {sec,label,prompt,given,type,note};
+}
+
+const cards = [
+  // ---- Einführung: NPPPPNN ----
+  C_("einfuehrung","N1","Legen diese Angaben ein Dreieck fest?",
+    {a:"6 cm", beta:"50°"}, "UNVOLLSTAENDIG",
+    "Nur zwei Angaben – ein Dreieck hat drei unabhängige Bestimmungsstücke. Das reicht nicht."),
+  C_("einfuehrung","P1","Welcher Typ? Ist er ein Kongruenzsatz?",
+    {a:"7 cm", b:"5 cm", c:"4 cm"}, "SSS",
+    "Drei Seiten → Typ SSS. Damit ist das Dreieck eindeutig festgelegt."),
+  C_("einfuehrung","P2","Welcher Typ? Ist er ein Kongruenzsatz?",
+    {a:"6 cm", b:"5 cm", gamma:"40°"}, "SWS",
+    "γ liegt an der Ecke C – genau zwischen den Seiten a und b. Der eingeschlossene Winkel ist gegeben → SWS."),
+  C_("einfuehrung","P3","Welcher Typ? Ist er ein Kongruenzsatz?",
+    {alpha:"60°", c:"5 cm", beta:"70°"}, "WSW",
+    "c verbindet die Ecken A und B – genau zwischen den Winkeln α und β. Die eingeschlossene Seite ist gegeben → WSW."),
+  C_("einfuehrung","P4","Welcher Typ? Ist er ein Kongruenzsatz?",
+    {a:"6 cm", b:"4 cm", alpha:"50°"}, "SSW",
+    "a und b treffen sich bei C – der eingeschlossene Winkel wäre γ. Gegeben ist aber α, das a gegenüberliegt. Der Winkel ist nicht eingeschlossen → SSW, damit nicht automatisch eindeutig."),
+  C_("einfuehrung","N2","Gleiche Seiten wie eben – aber welcher Winkel ist diesmal gegeben?",
+    {a:"6 cm", b:"4 cm", gamma:"70°"}, "SWS",
+    "Dieselben Seiten a und b, jetzt aber der eingeschlossene Winkel γ → SWS. Vergleiche das mit der vorigen Karte: gleiche Seiten, anderer Winkel, anderes Ergebnis."),
+  C_("einfuehrung","N3","Welcher Typ? Ist er ein Kongruenzsatz?",
+    {alpha:"50°", beta:"60°", gamma:"70°"}, "WWW",
+    "Drei Winkel, keine Seite → WWW. Das legt nur die Form fest, nicht die Größe."),
+
+  // ---- Testing ----
+  C_("testing","T1","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {b:"5 cm", c:"6 cm", alpha:"55°"}, "SWS",
+    "b und c treffen sich bei A – α ist genau dieser eingeschlossene Winkel → SWS."),
+  C_("testing","T2","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {alpha:"40°", beta:"65°", gamma:"75°"}, "WWW",
+    "Nur Winkel → WWW, kein Kongruenzsatz."),
+  C_("testing","T3","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {a:"5 cm", b:"5 cm", c:"6 cm"}, "SSS",
+    "Drei Seiten → SSS."),
+  C_("testing","T4","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {b:"4 cm", c:"7 cm", gamma:"50°"}, "SSW",
+    "b und c treffen sich bei A; der eingeschlossene Winkel wäre α. Gegeben ist aber γ, das c gegenüberliegt – nicht eingeschlossen → SSW."),
+  C_("testing","T5","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {alpha:"45°", gamma:"80°", b:"5 cm"}, "WSW",
+    "α und γ liegen an A und C; die Seite dazwischen ist b → WSW."),
+  C_("testing","T6","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {a:"6 cm", c:"5 cm", beta:"60°"}, "SWS",
+    "a und c treffen sich bei B – β ist der eingeschlossene Winkel → SWS."),
+  C_("testing","T7","Welcher Typ? Kongruenzsatz – ja oder nein?",
+    {a:"6 cm", b:"5 cm", beta:"55°"}, "SSW",
+    "a und b treffen sich bei C; eingeschlossen wäre γ. Gegeben ist β, das b gegenüberliegt – nicht eingeschlossen → SSW."),
+
+  // ---- Übung ----
+  C_("uebung","Aufgabe 1","Notwendigerweise kongruent?",
+    {a:"7 cm", b:"5 cm", c:"4 cm"}, "SSS",
+    "SSS → ja, eindeutig kongruent."),
+  C_("uebung","Aufgabe 2","Notwendigerweise kongruent?",
+    {a:"6 cm", c:"5 cm", alpha:"50°"}, "SSW",
+    "a und c treffen sich bei B, eingeschlossen wäre β. Gegeben ist α (gegenüber a) → SSW, nicht garantiert eindeutig."),
+  C_("uebung","Aufgabe 3","Notwendigerweise kongruent?",
+    {a:"4 cm", b:"4 cm", gamma:"90°"}, "SWS",
+    "a und b treffen sich bei C, γ ist eingeschlossen → SWS, ja eindeutig."),
+  C_("uebung","Aufgabe 4","Notwendigerweise kongruent?",
+    {alpha:"30°", beta:"80°", gamma:"70°"}, "WWW",
+    "Nur Winkel → WWW, nein – nur die Form ist festgelegt, nicht die Größe."),
+  C_("uebung","Aufgabe 5","Notwendigerweise kongruent?",
+    {a:"5 cm", c:"5 cm", beta:"45°"}, "SWS",
+    "a und c treffen sich bei B, β ist eingeschlossen → SWS, ja eindeutig."),
+  C_("uebung","Aufgabe 6 (Transfer)","Erfinde selbst ein SSW-Kärtchen, das nicht eindeutig ist. Verändere danach eine einzige Angabe so, dass es zu SWS wird.",
+    {}, null,
+    "Offene Aufgabe – keine feste Lösung. Tipp: Tausche den nicht eingeschlossenen Winkel gegen den eingeschlossenen an derselben Ecke."),
+];
+
+/* ---------- Rendering ---------- */
+const KEYMAP = {a:'a',b:'b',c:'c',alpha:'α',beta:'β',gamma:'γ'};
+let idx = 0;
+let shown = false;
+
+const $ = id=>document.getElementById(id);
+
+function currentSectionCards(sec){ return cards.filter(c=>c.sec===sec); }
+
+function render(){
+  const c = cards[idx];
+  $("figure").innerHTML = drawTriangle(c.given);
+  $("cardlabel").textContent = c.label;
+  $("prompt").textContent = c.prompt;
+
+  const chipsHtml = Object.keys(c.given).map(k=>{
+    return `<span class="chip">${KEYMAP[k]} <b>${c.given[k]}</b></span>`;
+  }).join("");
+  $("given").innerHTML = chipsHtml || `<span class="chip">keine weiteren Angaben</span>`;
+
+  const atype = $("atype"), anote = $("anote"), rev = $("reveal");
+  rev.classList.toggle("shown", shown);
+  if(c.type===null){
+    atype.textContent = "offene Aufgabe";
+    atype.className = "answer-type";
+  } else {
+    atype.textContent = TYPE_NAME[c.type] + (TYPE_OK[c.type] ? " ✓ eindeutig" : (c.type==="UNVOLLSTAENDIG" ? "" : " ✗ nicht eindeutig"));
+    atype.className = "answer-type " + (TYPE_OK[c.type] ? "ok" : "bad");
+  }
+  anote.textContent = c.note;
+
+  // Tabs
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.setAttribute("aria-selected", t.dataset.sec===c.sec ? "true":"false");
+  });
+
+  // Where / counters
+  const secCards = currentSectionCards(c.sec);
+  const pos = secCards.indexOf(c)+1;
+  const secName = {einfuehrung:"Einführung",testing:"Testing",uebung:"Übung"}[c.sec];
+  $("where").innerHTML = secName + `<small>${pos} / ${secCards.length}</small>`;
+
+  $("prev").disabled = idx===0;
+  $("next").disabled = idx===cards.length-1;
+  $("revealBtn").setAttribute("aria-pressed", shown);
+  $("revealBtn").textContent = shown ? "Lösung ausblenden" : "Lösung zeigen";
+}
+
+function goTo(i){ idx=Math.min(cards.length-1,Math.max(0,i)); shown=false; render(); }
+function go(d){ goTo(idx+d); }
+
+$("prev").onclick=()=>go(-1);
+$("next").onclick=()=>go(1);
+$("revealBtn").onclick=()=>{ shown=!shown; render(); };
+
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    const first = cards.findIndex(c=>c.sec===t.dataset.sec);
+    goTo(first);
+  };
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="PageDown"){go(1);e.preventDefault();}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){go(-1);e.preventDefault();}
+  else if(e.key===" "||e.key==="Enter"){$("revealBtn").click();e.preventDefault();}
+});
+
+render();
+</script>
+</body>
+</html>
